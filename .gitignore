@@ -1,0 +1,13 @@
+build/
+deps/
+private/
+signing/
+.env*
+.venv*/
+*.p12
+*.jks
+*.keystore
+*.sqlite*
+*.db
+__pycache__/
+.DS_Store

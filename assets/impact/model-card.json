@@ -1,0 +1,167 @@
+{
+  "schema": 2,
+  "status": "trained_experimental",
+  "architecture": "redwood-mobilenetv3-impact-shaft-v2-mean2",
+  "onnx_file": "impact-center.onnx",
+  "onnx_sha256": "dd6b558f936e89b427330ea7bcbada2d2149b048befaf732000215d2417451d8",
+  "bytes": 16682848,
+  "input_size": 384,
+  "review_width": 600,
+  "channels": [
+    "impact_center",
+    "shaft"
+  ],
+  "input": "RGB float32 NCHW [0,1]",
+  "operating_threshold": 0.16,
+  "peak_radius": 3,
+  "tile_overlap": 64,
+  "coordinate_convention": "EXIF upright image; output locations refer to input photo pixels",
+  "parity_max_errors": [
+    1.9609928131103516e-05,
+    1.2209638953208923e-06,
+    1.4901161193847656e-06
+  ],
+  "training": {
+    "manifest_sha256": "16d2cbe2c2e467d86f6fa0b6da8dcd7070e825f6ee4e56e026758abb296ea59d",
+    "architecture": "redwood-mobilenetv3-impact-shaft-v2",
+    "width": 32,
+    "input_size": 384,
+    "parameters": 1413810,
+    "seed": 4729,
+    "epochs": 100,
+    "steps_per_epoch": 80,
+    "batch": 2,
+    "threads": 4,
+    "device": "mps",
+    "holdout_used": false,
+    "real_train_photos": 20,
+    "synthetic_train_photos": 96,
+    "public_train_photos": 479,
+    "validation_photos": 7,
+    "resume_mode": "weights only, new optimizer and schedule",
+    "source_sha256": {
+      "train.py": "0422f9b884cd48ef2aeca7a81557d7c90b6a617052b648a51505a84d2584099b",
+      "network.py": "21cd61cab9149cb150c7541550120dfbb7053829656b2679cb0736c753421b73",
+      "data.py": "df7f5b15408303a054de12ef08925cea32a3eb32dabecd9a72d0d6b194bcd6ff",
+      "predict.py": "340da37643f937cc9a1bbe4465ef7e18b03ee6ab7e180460b9bc0271fb850cf6",
+      "metrics.py": "d0d17133db456ed8d75f51c7d84f5b24747d1fa56402e2e2a5c2e0c35be6b6fc"
+    }
+  },
+  "validation": {
+    "aggregate": {
+      "reference": 38,
+      "predicted": 28,
+      "matched": 26,
+      "precision": 0.9285714285714286,
+      "recall": 0.6842105263157895,
+      "f1": 0.7878787878787878,
+      "missed": 12,
+      "extras": 2,
+      "mean_error_px": 1.9014644267950291,
+      "median_error_px": 1.4178083822940843,
+      "p95_error_px": 4.671785580777392,
+      "exact_photos": 1,
+      "photos": 7
+    },
+    "threshold": 0.16,
+    "tolerance_px": 6.0,
+    "error_scope": "Euclidean image-plane impact error on one-to-one matches only; misses and extras counted separately. Not physical millimeter accuracy."
+  },
+  "checkpoint_sha256": "a986feaa873d4114e9433e102a959aef4fc85e4c2859f72652c99fbf6bd16c6b",
+  "ensemble_members": [
+    {
+      "sha256": "a986feaa873d4114e9433e102a959aef4fc85e4c2859f72652c99fbf6bd16c6b",
+      "width": 32,
+      "epoch": 80
+    },
+    {
+      "sha256": "c583c7e3093204ce881d603af8ba04ef3a8cf4625dee5a6198a1cc83f2f049e3",
+      "width": 64,
+      "epoch": 15
+    }
+  ],
+  "export_source_sha256": {
+    "export.py": "5e02992d8053faf5bf3986b2351cb9f0d1168ab798f00d1ee7882e6a813df323",
+    "network.py": "8bee2d83b44666ced8d51f7a6f5da088791934bba50ac080f1188268ebf4f132",
+    "metrics.py": "5237bd62444cdada6f2ab3d104970bfcaac4443b2b27127f71830ef5b52b71ac",
+    "predict.py": "3a7cf52458b6d3ad018f374e3332e25f6ce4059d789ddbe1bbdc6589c64207f1"
+  },
+  "warnings": [
+    "Visible entry estimates, not guaranteed detection of fully occluded arrows",
+    "Target-plane coordinates require independent target geometry",
+    "Same-session development validation, not certified physical accuracy"
+  ],
+  "native_parity": [
+    {
+      "name": "real.png",
+      "native_points": 5,
+      "desktop_points": 5,
+      "max_probability_error": 9.194016456604004e-06,
+      "max_coordinate_error_input_px": 1.4950951140235702e-05,
+      "inference_ms": 2216.194531,
+      "passed": true
+    },
+    {
+      "name": "real_large.png",
+      "native_points": 5,
+      "desktop_points": 5,
+      "max_probability_error": 6.318092346191406e-06,
+      "max_coordinate_error_input_px": 7.368017918452097e-06,
+      "inference_ms": 1876.32052,
+      "passed": true
+    },
+    {
+      "name": "public.png",
+      "native_points": 5,
+      "desktop_points": 5,
+      "max_probability_error": 5.781650543212891e-06,
+      "max_coordinate_error_input_px": 2.5693240104374127e-06,
+      "inference_ms": 2889.268175,
+      "passed": true
+    },
+    {
+      "name": "empty.png",
+      "native_points": 0,
+      "desktop_points": 0,
+      "max_probability_error": 3.129243850708008e-06,
+      "max_coordinate_error_input_px": 0.0,
+      "inference_ms": 2151.10729,
+      "passed": true
+    },
+    {
+      "name": "short.png",
+      "native_points": 0,
+      "desktop_points": 0,
+      "max_probability_error": 4.76837158203125e-07,
+      "max_coordinate_error_input_px": 0.0,
+      "inference_ms": 1064.662708,
+      "passed": true
+    }
+  ],
+  "intended_use": "Personal noncommercial experimental entry suggestions, with reviewed cross-view alignment and editable grouping preview",
+  "training_data_notice": "See licenses/IMPACT_DATASET.txt and licenses/TORCHVISION.txt. No source photographs or private annotations are bundled.",
+  "validation_release_targets_met": false,
+  "requires_independent_new_session_test": true,
+  "reserved_evaluation": {
+    "aggregate": {
+      "reference": 36,
+      "predicted": 26,
+      "matched": 19,
+      "precision": 0.7307692307692307,
+      "recall": 0.5277777777777778,
+      "f1": 0.6129032258064516,
+      "missed": 17,
+      "extras": 7,
+      "mean_error_px": 1.8453655017230703,
+      "median_error_px": 1.784009227330496,
+      "p95_error_px": 3.5008287404296654,
+      "exact_photos": 4,
+      "photos": 8
+    },
+    "threshold": 0.16,
+    "tolerance_px": 6.0,
+    "error_scope": "Euclidean image-plane impact error on one-to-one matches only; misses and extras counted separately. Not physical millimeter accuracy.",
+    "pristine_new_session_test": false,
+    "report_sha256": "ccc4f02daf3549dfc8d664f0864770a3f69bd88c0438a9917d3dde9f39569db9"
+  }
+}

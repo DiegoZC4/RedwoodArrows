@@ -1,0 +1,104 @@
+[
+  {
+    "url": "https://dl.google.com/dl/android/maven2/com/google/ar/core/1.56.0/core-1.56.0.aar",
+    "path": "deps/arcore.aar",
+    "sha256": "20a66fb176c62234879a94202f1424adf14f3cc1159aedbd247d3517b65f1f50",
+    "bytes": 356212
+  },
+  {
+    "url": "https://repo.maven.apache.org/maven2/org/opencv/opencv/4.12.0/opencv-4.12.0.aar",
+    "path": "deps/opencv.aar",
+    "sha256": "f71846a313388d9da667a59be1e921669fcf792d1ba264b3898253ca789bc3f0",
+    "bytes": 117745028
+  },
+  {
+    "url": "https://dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.3.0/annotation-1.3.0.jar",
+    "path": "deps/annotation.jar",
+    "sha256": "97dc45afefe3a1e421da42b8b6e9f90491477c45fc6178203e3a5e8a05ee8553",
+    "bytes": 31705
+  },
+  {
+    "url": "https://repo.maven.apache.org/maven2/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar",
+    "path": "deps/commons-math3.jar",
+    "sha256": "1e56d7b058d28b65abd256b8458e3885b674c1d588fa43cd7d1cbb9c7ef2b308",
+    "bytes": 2213560
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/java/com/google/ar/core/examples/java/common/rendering/BackgroundRenderer.java",
+    "path": "src/com/google/ar/core/examples/java/common/rendering/BackgroundRenderer.java",
+    "sha256": "979c8e7f51cfeed6d425345814922162ea8c7362b21a965f0174c560ab847682",
+    "bytes": 12665
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/java/com/google/ar/core/examples/java/common/rendering/ShaderUtil.java",
+    "path": "src/com/google/ar/core/examples/java/common/rendering/ShaderUtil.java",
+    "sha256": "ff68fc4d35a26a0db851df5cbf1d2b0bf89e24d9d9fce2d856b6c299f2200c07",
+    "bytes": 4667
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/assets/shaders/screenquad.vert",
+    "path": "assets/shaders/screenquad.vert",
+    "sha256": "f038ef510c870e3f191ea00c493ecbe29fbb63ab5e1d09f0931f354940c22a27",
+    "bytes": 747
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/assets/shaders/screenquad.frag",
+    "path": "assets/shaders/screenquad.frag",
+    "sha256": "52a789996aa7afd6e1377a4d4a30ecd61cb9d06684cc3b8e544e9ef1de338295",
+    "bytes": 797
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/assets/shaders/background_show_depth_color_visualization.vert",
+    "path": "assets/shaders/background_show_depth_color_visualization.vert",
+    "sha256": "8a02ea48e138103dfef64695439357638d0c05372c1e30113427be1caaf9c6dc",
+    "bytes": 747
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/samples/augmented_image_java/app/src/main/assets/shaders/background_show_depth_color_visualization.frag",
+    "path": "assets/shaders/background_show_depth_color_visualization.frag",
+    "sha256": "492c5aca1de9b44c78356266caab77cfe691c1eb995f9bcee5d9810516004401",
+    "bytes": 2608
+  },
+  {
+    "url": "https://raw.githubusercontent.com/google-ar/arcore-android-sdk/3abfeb18669c2cbb2d07057f135d117ee9d91826/LICENSE",
+    "path": "assets/licenses/ARCORE.txt",
+    "sha256": "556c28e8049670e88381e75805d733da6c0ccc5f41e41d235c41a98752613053",
+    "bytes": 165124
+  },
+  {
+    "url": "https://raw.githubusercontent.com/opencv/opencv/4.12.0/LICENSE",
+    "path": "assets/licenses/OPENCV.txt",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "bytes": 11358
+  },
+  {
+    "url": "https://raw.githubusercontent.com/apache/commons-math/MATH_3_6_1/LICENSE.txt",
+    "path": "assets/licenses/COMMONS_MATH.txt",
+    "sha256": "64f23963615950bad9ddd31569a7f09afbbe11b81d94873ffd9b1cac6081a11d",
+    "bytes": 24038
+  },
+  {
+    "url": "https://raw.githubusercontent.com/apache/commons-math/MATH_3_6_1/NOTICE.txt",
+    "path": "assets/licenses/COMMONS_MATH_NOTICE.txt",
+    "sha256": "5495442a32bfc2b93b4a8f2c34c5c218d16cca434aa5684fb953d9419120e3fa",
+    "bytes": 324
+  },
+  {
+    "url": "https://raw.githubusercontent.com/htkseason/Archery-Scoring/bd9b6fac9be7ceb2f51a438800e5ebeb4abb230a/LICENSE.md",
+    "path": "assets/licenses/ARCHERY_SCORING.txt",
+    "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+    "bytes": 11357
+  },
+  {
+    "url": "https://raw.githubusercontent.com/htkseason/Archery-Scoring/bd9b6fac9be7ceb2f51a438800e5ebeb4abb230a/src/Entrance.java",
+    "path": "third_party/archery_scoring/Entrance.java.reference",
+    "sha256": "f6a3b1a8cb1cc20e57254c668448b0cd4f2f842ca02d30155652092d370f48fd",
+    "bytes": 12609
+  },
+  {
+    "url": "https://raw.githubusercontent.com/androidx/androidx/androidx-main/LICENSE.txt",
+    "path": "assets/licenses/ANDROIDX.txt",
+    "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0",
+    "bytes": 10175
+  }
+]

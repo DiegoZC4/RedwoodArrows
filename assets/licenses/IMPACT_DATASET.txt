@@ -1,0 +1,24 @@
+Experimental arrow-entry model: training-data attribution
+
+Archery target FITA 60cm, version 2
+Author: Haozhe Ma
+Source: https://www.kaggle.com/datasets/haozhema/archery-target-fita-60cm
+Dataset license: Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Locally imported on 2026-10-08: 479 JPEG photographs and 1,746 landing-point
+annotations. Archive SHA-256:
+2a249f3d8a3c35badaa80548a17e3085ee53ae0c7e4167b9241ffdf567e81078
+
+The experimental model is locally adapted using these point annotations,
+private assistant-reviewed photographs, synthetic arrow masks, and a pretrained
+torchvision MobileNetV3-Small backbone. Training adds a new entry-center decoder.
+Dataset photographs and private annotations are NOT included in the APK.
+
+This is a personal, noncommercial experimental build, not a public or commercial
+model release. Account for the dataset's attribution, noncommercial and
+share-alike terms, as well as upstream pretrained-weight data terms, before
+redistribution. See TORCHVISION.txt for the reused backbone-code notice.
+
+No claim of certified physical accuracy or complete detection of occluded
+arrows is made. Multi-view agreement is not an independent accuracy guarantee.

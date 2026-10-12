@@ -1,0 +1,7 @@
+Options -Indexes
+DirectoryIndex api.php
+SetEnvIf Authorization "(.+)" HTTP_AUTHORIZATION=$1
+<IfModule mod_headers.c>
+    Header always set Cache-Control "no-store, private"
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

@@ -1,0 +1,43 @@
+name: Build private Android beta
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install fixed SDK tools
+        run: sdkmanager 'platforms;android-34' 'build-tools;36.1.0'
+      - name: Sync integration tests (invented data only)
+        run: |
+          python3 -m venv .venv-test
+          .venv-test/bin/pip install 'Pillow==11.3.0'
+          REDWOOD_PYTHON=.venv-test/bin/python bash tools/test_sync.sh
+      - name: Build with private signing key
+        env:
+          REDWOOD_KEYSTORE_BASE64: ${{ secrets.REDWOOD_KEYSTORE_BASE64 }}
+          REDWOOD_STORE_PASSWORD: ${{ secrets.REDWOOD_STORE_PASSWORD }}
+          REDWOOD_KEY_PASSWORD: ${{ secrets.REDWOOD_KEY_PASSWORD }}
+          REDWOOD_KEY_ALIAS: ${{ secrets.REDWOOD_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          signing_dir=$(mktemp -d)
+          trap 'rm -f "$signing_dir/release.p12"; rmdir "$signing_dir"' EXIT
+          printf '%s' "$REDWOOD_KEYSTORE_BASE64" | base64 --decode > "$signing_dir/release.p12"
+          chmod 600 "$signing_dir/release.p12"
+          export REDWOOD_KEYSTORE="$signing_dir/release.p12"
+          bash tools/build_beta.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RedwoodArrows-private-beta
+          path: build/beta/RedwoodArrows.apk
+          if-no-files-found: error
+          retention-days: 14

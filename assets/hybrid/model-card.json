@@ -1,0 +1,242 @@
+{
+  "schema": 1,
+  "status": "trained_experimental",
+  "architecture": "redwood-mobilenetv3-small-s16-decoder-v1",
+  "onnx_file": "arrow-recognizer.onnx",
+  "onnx_sha256": "0e542404f629f7da23d03c4b74b200642e410d0ffa153745ed5d6795ebc90729",
+  "bytes": 1123504,
+  "input_size": 320,
+  "input": "RGB float32 NCHW [0,1]",
+  "channels": [
+    "shaft",
+    "vanes_nocks"
+  ],
+  "provisional_threshold": 0.5,
+  "threshold_source": "synthetic validation ends only",
+  "opencv": "4.12.0",
+  "onnx_opset": 13,
+  "parity_max_errors": [
+    1.564621925354004e-07,
+    4.116445779800415e-07,
+    9.119510650634766e-06
+  ],
+  "training": {
+    "architecture": "redwood-mobilenetv3-small-s16-decoder-v1",
+    "input_size": 320,
+    "channels": [
+      "shaft",
+      "vanes_nocks"
+    ],
+    "dataset": "synthetic/hybrid-v1",
+    "manifest_sha256": "5592a5c959c69f7fb86ce181a5c89b351377edbda98b5f7f3085948a84d3ef83",
+    "pretrained_url": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+    "pretrained_sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+    "parameter_count": 275418,
+    "device": "cpu",
+    "batch": 2,
+    "threads": 4,
+    "workers": 0,
+    "seed": 1257,
+    "max_seconds": 1800,
+    "epochs_requested": 20,
+    "real_photo_training": false,
+    "test_used_for_selection": false,
+    "versions": {
+      "torch": "2.13.0",
+      "torchvision": "0.28.0",
+      "numpy": "2.2.6",
+      "pillow": "12.3.0"
+    }
+  },
+  "validation_pixels": {
+    "shaft_iou": 0.3271164309031556,
+    "fletching_iou": 0.3404195804195804,
+    "shaft_pixel_precision": 0.3530890298332159,
+    "shaft_pixel_recall": 0.8164141002661452,
+    "epoch": 20,
+    "loss": 0.39963510259985924,
+    "seconds": 282.67
+  },
+  "real_world_accuracy_verified": false,
+  "automatic_arrow_identities": false,
+  "warnings": [
+    "Neural support is not a calibrated confidence interval",
+    "No completely hidden arrow can be guaranteed detectable",
+    "Review target calibration, arrow IDs and every suggested shaft"
+  ],
+  "operating_threshold": 0.3,
+  "operating_point_selection": {
+    "split": "validation",
+    "criterion": "maximum one-to-one shaft F1; ties favor precision then higher threshold",
+    "model_sha256": "0e542404f629f7da23d03c4b74b200642e410d0ffa153745ed5d6795ebc90729",
+    "manifest_sha256": "5592a5c959c69f7fb86ce181a5c89b351377edbda98b5f7f3085948a84d3ef83",
+    "scores": [
+      {
+        "threshold": 0.2,
+        "tp": 63,
+        "predictions": 119,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 3,
+        "precision": 0.5294117647058824,
+        "recall": 0.6363636363636364,
+        "f1": 0.5779816513761468
+      },
+      {
+        "threshold": 0.3,
+        "tp": 62,
+        "predictions": 113,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 2,
+        "precision": 0.5486725663716814,
+        "recall": 0.6262626262626263,
+        "f1": 0.5849056603773585
+      },
+      {
+        "threshold": 0.4,
+        "tp": 59,
+        "predictions": 109,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 1,
+        "precision": 0.5412844036697247,
+        "recall": 0.5959595959595959,
+        "f1": 0.5673076923076923
+      },
+      {
+        "threshold": 0.5,
+        "tp": 59,
+        "predictions": 105,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 1,
+        "precision": 0.5619047619047619,
+        "recall": 0.5959595959595959,
+        "f1": 0.5784313725490197
+      },
+      {
+        "threshold": 0.6,
+        "tp": 57,
+        "predictions": 98,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 1,
+        "precision": 0.5816326530612245,
+        "recall": 0.5757575757575758,
+        "f1": 0.5786802030456852
+      },
+      {
+        "threshold": 0.7,
+        "tp": 55,
+        "predictions": 90,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 0,
+        "precision": 0.6111111111111112,
+        "recall": 0.5555555555555556,
+        "f1": 0.582010582010582
+      },
+      {
+        "threshold": 0.8,
+        "tp": 50,
+        "predictions": 76,
+        "eligible_arrows": 99,
+        "all_arrows": 106,
+        "frames": 24,
+        "positive_frames": 20,
+        "complete_positive_frames": 2,
+        "negative_frames": 4,
+        "negative_false_positives": 0,
+        "precision": 0.6578947368421053,
+        "recall": 0.5050505050505051,
+        "f1": 0.5714285714285714
+      }
+    ],
+    "selected": {
+      "threshold": 0.3,
+      "tp": 62,
+      "predictions": 113,
+      "eligible_arrows": 99,
+      "all_arrows": 106,
+      "frames": 24,
+      "positive_frames": 20,
+      "complete_positive_frames": 2,
+      "negative_frames": 4,
+      "negative_false_positives": 2,
+      "precision": 0.5486725663716814,
+      "recall": 0.6262626262626263,
+      "f1": 0.5849056603773585
+    },
+    "real_labels_used": false,
+    "test_used": false
+  },
+  "native_parity": [
+    {
+      "name": "clean.png",
+      "max_probability_error": 1.5497207641601562e-06,
+      "native_proposals": 2,
+      "desktop_proposals": 2,
+      "max_coordinate_error_px": 2.842170943040401e-14,
+      "passed": true
+    },
+    {
+      "name": "cluster.png",
+      "max_probability_error": 1.1920928955078125e-06,
+      "native_proposals": 5,
+      "desktop_proposals": 5,
+      "max_coordinate_error_px": 0.0,
+      "passed": true
+    },
+    {
+      "name": "empty.png",
+      "max_probability_error": 9.238719940185547e-07,
+      "native_proposals": 0,
+      "desktop_proposals": 0,
+      "max_coordinate_error_px": 0.0,
+      "passed": true
+    },
+    {
+      "name": "portrait.png",
+      "max_probability_error": 2.384185791015625e-06,
+      "native_proposals": 7,
+      "desktop_proposals": 7,
+      "max_coordinate_error_px": 1.1368683772161603e-13,
+      "passed": true
+    },
+    {
+      "name": "portrait_large.png",
+      "max_probability_error": 2.5033950805664062e-06,
+      "native_proposals": 8,
+      "desktop_proposals": 8,
+      "max_coordinate_error_px": 1.1368683772161603e-13,
+      "passed": true
+    }
+  ],
+  "native_opencv": "4.12.0",
+  "intended_use": "Personal experimental unconfirmed shaft suggestions; manual review mandatory"
+}

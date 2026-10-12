@@ -1,0 +1,18 @@
+Target identification previews
+
+The low-resolution target illustrations in assets/target-previews are proprietary
+Maple Leaf Press artwork, not open-source code or original artwork by this app.
+Copyright and trademarks remain with their respective owners.
+
+Source: https://www.mapleleafpress.com/
+Full per-image URLs, dimensions, extraction provenance and SHA-256 hashes are
+bundled in assets/target-previews/manifest.json. Retrieved October 8, 2026.
+
+Purpose: offline identification in Diego's personal experimental app. These are
+small catalog thumbnails, not print-ready target sheets or digitized scoring
+templates. This project does not assert a general redistribution license for
+the artwork. Obtain permission before a public/commercial release.
+
+95 previews preserve the maker's original HTML JPEG bytes. Two complete embedded
+illustrations were extracted from the maker's PDF flyers with Poppler; the PDF
+files themselves are not bundled. No artwork is used to set measurement scale.
