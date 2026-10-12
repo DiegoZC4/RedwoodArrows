@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import socket
+import sqlite3
 import subprocess
 import tempfile
 import time
@@ -100,6 +101,25 @@ def run():
             check(status == 200 and len(result['token']) == 64, 'Independent account')
             users.append(result)
         owner, member = [u['token'] for u in users]
+        check(all(u['expires'] == 0 for u in users), 'New sign-ins have no routine expiration')
+        # Simulate an active 90-day session issued by the previous release and
+        # an already-expired one. The migration must retain only valid access.
+        with sqlite3.connect(server.private / 'library.sqlite') as db:
+            owner_id = db.execute('SELECT user_id FROM tokens WHERE hash=?', (hashlib.sha256(owner.encode()).hexdigest(),)).fetchone()[0]
+            expired = 'b'*64
+            db.execute('UPDATE tokens SET expires=? WHERE hash=?', (int(time.time())+90*86400, hashlib.sha256(owner.encode()).hexdigest()))
+            db.execute('INSERT INTO tokens VALUES (?,?,?)', (hashlib.sha256(expired.encode()).hexdigest(), owner_id, int(time.time())-1))
+        check(server.call('me', token=expired)[0] == 401, 'Expired legacy token already denied')
+        migrated = json.loads(subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'persistent-sessions', str(server.private)]))
+        check(migrated['active_sessions_migrated'] == 1, 'Only active finite sessions promoted')
+        check(server.call('me', token=owner)[0] == 200, 'Existing phone token works unchanged after migration')
+        check(server.call('me', token=expired)[0] == 401, 'Migration never revives expired tokens')
+        repeated = json.loads(subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'persistent-sessions', str(server.private)]))
+        check(repeated['active_sessions_migrated'] == 0, 'Migration is idempotent')
+        status, extra = server.call('login', {'username': 'alex', 'password': 'test-only long passphrase'})
+        check(status == 200 and extra['expires'] == 0, 'Later login also issues persistent session')
+        check(server.call('me', token=owner)[0] == 200 and server.call('me', token=member)[0] == 200, 'Login cleanup does not delete persistent sessions')
+        check(server.call('logout', {}, extra['token'])[0] == 200, 'Temporary persistent session revocable')
         check(users[0]['library'] == users[1]['library'], 'Both share one private library')
         check(server.call('apk', token=member)[0] == 503, 'Missing release fails closed')
         release = server.private / 'release'
@@ -186,10 +206,11 @@ def run():
         check(server.call('me', token=replacement['token'])[0] == 200, 'New device token works')
         check(server.call('logout', {}, member)[0] == 200, 'Logout')
         check(server.call('me', token=member)[0] == 401, 'Logout revokes token')
+        subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'persistent-sessions', str(server.private)])
+        check(server.call('me', token=member)[0] == 401, 'Migration cannot resurrect a revoked token')
         for _ in range(16):
             last = server.call('login', {'username': 'locked', 'password': 'wrong'})[0]
         check(last == 429, 'Brute-force throttling')
-        import sqlite3
         db = sqlite3.connect(server.private / 'library.sqlite')
         check(db.execute('SELECT COUNT(*) FROM versions WHERE group_id=?', ('fixture',)).fetchone()[0] == 3, 'Every accepted version retained for recovery')
         check(not any(owner in str(row) for row in db.execute('SELECT * FROM tokens')), 'Server stores token hashes only')

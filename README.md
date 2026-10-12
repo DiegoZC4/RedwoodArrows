@@ -24,6 +24,11 @@ choose the actual shooter separately.
 Android may defer background jobs in battery saver/Doze or after a force-stop.
 Open the app to resume promptly. Do not uninstall/clear storage with unsynced
 shots. Signing out retains offline photos and coordinates on the unlocked phone.
+Sign-in has no routine time limit and survives normally signed, in-place app
+updates. Do not uninstall/reinstall to update: that erases the device's sign-in
+key. A new phone, clearing storage, explicit sign-out or security revocation can
+still require sign-in. Keep the package ID, signing identity, `sync-auth`
+preferences and `redwood-sync-v1` Keystore alias stable across releases.
 The server keeps prior accepted versions and images for recovery; choosing
 “2D only” affects new ends, not a request to erase old cloud photos.
 
@@ -82,7 +87,7 @@ to that environment's Python). The CI workflow runs these before packaging.
 ## Server
 
 `server/` is the matching PHP 8.2+ / PDO SQLite service. It uses invitation-only
-accounts, Argon2id password hashing, hashed revocable 90-day bearer tokens,
+accounts, Argon2id password hashing, hashed revocable non-expiring device tokens,
 HTTPS, private photo downloads, checksums, optimistic concurrency and revision
 history. The Android token is encrypted by Android Keystore; no cloud secret is
 embedded in the app. Shared-library members can see and edit all its groupings.

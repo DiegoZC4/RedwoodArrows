@@ -22,8 +22,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5601,
-      "sha256": "629a1ddbd4a7aa29c28e813afbec6c47cdfb5052ef98244347b7b665ca544cf1"
+      "bytes": 5992,
+      "sha256": "80f89f8e77cb80c381b4818de3f8f5f9c4071ef617f64857a7c1fd010f40c5b0"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -122,18 +122,18 @@
     },
     {
       "path": "server/README.md",
-      "bytes": 7435,
-      "sha256": "8b9af3a12f4cfb7e4b193e667fc55697e1a80792a773208dc8be8806f30d7b4c"
+      "bytes": 8539,
+      "sha256": "9ebf3b7125e1b7e1e605d21a8a50809f4088b9cb10b5efd31e22cc66b6038eae"
     },
     {
       "path": "server/app.php",
-      "bytes": 19980,
-      "sha256": "7d1d5cdb88650baeb794298672258d2d784281576eecc4190659bddc74eda87e"
+      "bytes": 20830,
+      "sha256": "35c1635ed5fea5ad37f74e8d765aba2cfbc575cecd6ea96d3a33c143f98be8e0"
     },
     {
       "path": "server/cli.php",
-      "bytes": 1965,
-      "sha256": "49fd07aa0d36f094ca7dca96847e9463dca9458c7c7a31b59d001a684aadd1dc"
+      "bytes": 2511,
+      "sha256": "d8c96f87d2f1f644d27ca7e904587e6ea0af7632b06880909937bef4932fee31"
     },
     {
       "path": "server/probe.php",
@@ -392,8 +392,8 @@
     },
     {
       "path": "tests/test_sync_server.py",
-      "bytes": 12654,
-      "sha256": "a8531b30b68d2ef24dc95dba70a55c731758cb54e41e38f09aba2e0fe9e733a7"
+      "bytes": 14867,
+      "sha256": "871adc38980422843b8e91935242ca4e0a05bb778151ddf1283eec1e11929059"
     },
     {
       "path": "tools/build_beta.sh",

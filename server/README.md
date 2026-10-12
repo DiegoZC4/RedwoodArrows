@@ -32,8 +32,10 @@ disabled so credentials cannot be forwarded to another host.
 
 Each person chooses a username and password in the app when redeeming an
 invitation. Passwords use Argon2id; only token hashes are stored server-side.
-90-day device tokens can be revoked by signing out; changing the password
-revokes all the account's other device sessions. The owner can issue member
+Device sessions have **no routine expiration** (`expires: 0` means until revoked),
+so neither a long offline stretch nor an app update requires signing in again.
+Tokens can still be revoked by signing out; changing the password revokes all
+the account's other device sessions. The owner can issue member
 invitations in the app. Invitations expire after seven days and work once.
 
 For a replacement invitation use `php cli.php invite /absolute/private member`.
@@ -41,6 +43,20 @@ For lost owner credentials, the hosting administrator can issue a new owner
 invitation, then revoke the old account's sessions through audited maintenance.
 There is no unverified email/password-reset endpoint or open registration.
 Library membership is separate from GitHub repository access.
+
+For an existing 90-day installation, first deploy the new `app.php` and `cli.php`,
+then run `php cli.php persistent-sessions /absolute/private`. This idempotent
+migration removes expiration only from sessions that are still valid; it never
+revives expired or revoked credentials, and does not change passwords, token
+hashes, groupings or photos. `php cli.php session-status /absolute/private`
+reports aggregate session counts without disclosing credentials. Back up first.
+
+Android sign-in is encrypted by a per-app Keystore key. Updates must preserve the
+package ID, signing key, `sync-auth` preferences and `redwood-sync-v1` Keystore
+alias (or explicitly migrate them). Install updates in place; never uninstall or
+clear app data as an update step. Uninstall/clear-data, a replacement phone, or
+explicit security revocation can require a fresh sign-in. No app update or
+password change is needed to benefit from the server-side session migration.
 
 ## Private app download
 

@@ -55,14 +55,26 @@ final class Redwood {
     }
     public function authenticate(string $token): array {
         if (!preg_match('/^[a-f0-9]{64}$/D',$token)) throw new RedwoodError(401,'Sign in to sync');
-        $u=$this->one('SELECT u.* FROM tokens t JOIN users u ON u.id=t.user_id WHERE t.hash=? AND t.expires>?',[hash('sha256',$token),time()]);
-        if (!$u) throw new RedwoodError(401,'Your sign-in expired. Offline data is safe.');return $u;
+        $u=$this->one('SELECT u.* FROM tokens t JOIN users u ON u.id=t.user_id WHERE t.hash=? AND (t.expires=0 OR t.expires>?)',[hash('sha256',$token),time()]);
+        if (!$u) throw new RedwoodError(401,'Sign in again to sync. Offline data is safe.');return $u;
     }
     public function session(array $user): array {
-        $token=bin2hex(random_bytes(32));$expires=time()+90*86400;
-        $this->execute('DELETE FROM tokens WHERE expires<?',[time()]);
+        // Zero means no routine expiration, not an already-expired timestamp.
+        // Logout/password changes still revoke the hashed token explicitly.
+        $token=bin2hex(random_bytes(32));$expires=0;
+        $this->execute('DELETE FROM tokens WHERE expires>0 AND expires<=?',[time()]);
         $this->execute('INSERT INTO tokens VALUES (?,?,?)',[hash('sha256',$token),$user['id'],$expires]);
         return $this->identity($user)+['token'=>$token,'expires'=>$expires];
+    }
+    public function makeSessionsPersistent(): array {
+        return $this->transaction(function(){
+            // Preserve the exact active bearer credentials held by old APKs.
+            // Never revive expired sessions or recreate revoked/deleted tokens.
+            $s=$this->db->prepare('UPDATE tokens SET expires=0 WHERE expires>?');$s->execute([time()]);
+            $changed=$s->rowCount();
+            $this->execute('INSERT INTO meta(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',['device_session_policy','until_revoked_v1']);
+            return ['policy'=>'until_revoked_v1','active_sessions_migrated'=>$changed];
+        });
     }
     public function identity(array $user): array {return ['library'=>$this->one("SELECT value FROM meta WHERE key='library'")['value'],'username'=>$user['username'],'role'=>$user['role']];}
     private static function password(string $password): void {if(strlen($password)<12||strlen($password)>128)throw new RedwoodError(400,'Use a password of 12–128 characters');}
