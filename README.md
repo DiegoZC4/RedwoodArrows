@@ -8,11 +8,14 @@ choose the actual shooter separately.
 
 ## Try it
 
-1. Download `RedwoodArrows.apk` from this **private repository's Releases** on
-   your Android phone. Permit installation from your browser when Android asks.
-2. Open **Shared library → Join library**. Choose your own username and password
-   (12+ characters), and paste your private one-use invitation. Invitations
-   expire after seven days. Existing accounts use **Sign in** instead.
+1. Obtain the signed `RedwoodArrows.apk` using the private download instructions
+   supplied with your account, or from a private GitHub release if one has been
+   published. The live authenticated download is hosted on diegozc.com; GitHub
+   access is not required. Permit installation from your browser when Android asks.
+2. Open **Shared library → Sign in** using your supplied account. Do not use
+   **Join library** for an account that already exists. New invitees without an
+   account choose **Join library**, pick a username and password (12+ characters),
+   and paste their private one-use invitation; invitations expire in seven days.
 3. Let the first sync finish to download existing shooter identities, groupings
    and photos. Pick the shooter, target and distance; scan or import a grouping.
    Subsequent captures and corrections work without signal. Android resumes
@@ -23,6 +26,14 @@ Open the app to resume promptly. Do not uninstall/clear storage with unsynced
 shots. Signing out retains offline photos and coordinates on the unlocked phone.
 The server keeps prior accepted versions and images for recovery; choosing
 “2D only” affects new ends, not a request to erase old cloud photos.
+
+For setup assistants: POST JSON `{username,password}` to
+`https://diegozc.com/redwood/api.php?action=login`. Keep the response token
+private, and pass it only in `Authorization: Bearer …` on GET `?action=release`
+and GET `?action=apk`. Verify the downloaded byte count, SHA-256 and signing
+certificate against the private handoff, then POST `{}` to `?action=logout` to
+revoke that temporary download session. Never put secrets in URLs or source.
+See `server/README.md`. The app's subsequent sign-in creates its own session.
 
 If both phones change one grouping offline, neither overwrites the other.
 **Shared library → Review edit conflicts** lets you select the version to keep.

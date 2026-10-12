@@ -42,6 +42,24 @@ invitation, then revoke the old account's sessions through audited maintenance.
 There is no unverified email/password-reset endpoint or open registration.
 Library membership is separate from GitHub repository access.
 
+## Private app download
+
+An authenticated member can request `GET ?action=release` for the version, APK
+SHA-256, signing-certificate SHA-256 and byte count, then `GET ?action=apk` for
+the signed Android beta. Both require the same Bearer header as sync; anonymous
+requests return 401. Never put a password or token in a URL. A setup assistant
+can log in with the member's account, download and verify the APK, then revoke
+that temporary download session with `POST ?action=logout`. Signing in on the
+phone creates its own independent encrypted session.
+
+The release lives in the private `release/RedwoodArrows.apk`, not the public web
+root. `release/manifest.json` supplies `version`, `package` (`org.redwoodarrows`),
+`bytes`, `sha256` and `certificate_sha256`. Both files must be owner-readable
+only. The server verifies size and checksum before serving a release. Deploy a
+complete staged release directory with an atomic rename; do not replace bytes
+under an active filename in place. Keep release downloads private because this
+personal beta includes third-party target previews and noncommercial weights.
+
 ## Storage, durability and limits
 
 Group records retain the complete saved JSON: stable IDs, target geometry,

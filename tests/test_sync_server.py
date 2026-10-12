@@ -88,7 +88,7 @@ def run():
 
     with Server() as server:
         check(server.call('health')[1]['private'], 'Private health response')
-        for action in ['changes', 'group&id=example', 'photo&hash=' + 'a'*64, 'me']:
+        for action in ['changes', 'group&id=example', 'photo&hash=' + 'a'*64, 'me', 'release', 'apk']:
             check(server.call(action)[0] == 401, 'No anonymous data: ' + action)
         for action in ['save', 'missing', 'invite', 'logout']:
             check(server.call(action, {})[0] == 401, 'No anonymous mutation: ' + action)
@@ -101,6 +101,19 @@ def run():
             users.append(result)
         owner, member = [u['token'] for u in users]
         check(users[0]['library'] == users[1]['library'], 'Both share one private library')
+        check(server.call('apk', token=member)[0] == 503, 'Missing release fails closed')
+        release = server.private / 'release'
+        release.mkdir()
+        fake_apk = b'PK\x03\x04 bounded test fixture, not an Android application'
+        release_metadata = {'version': 'test-only', 'package': 'org.redwoodarrows', 'bytes': len(fake_apk), 'sha256': hashlib.sha256(fake_apk).hexdigest(), 'certificate_sha256': 'a'*64}
+        (release / 'RedwoodArrows.apk').write_bytes(fake_apk)
+        (release / 'manifest.json').write_text(json.dumps(release_metadata))
+        check(server.call('release', token=member)[1]['sha256'] == release_metadata['sha256'], 'Member can verify release metadata')
+        check(server.call('apk', token=member)[1] == fake_apk, 'Authenticated APK bytes preserved')
+        check(server.call('apk', {}, token=owner)[0] == 405, 'Download is read-only')
+        (release / 'RedwoodArrows.apk').write_bytes(b'corrupted release')
+        check(server.call('apk', token=member)[0] == 503, 'Corrupt APK is never served')
+        (release / 'RedwoodArrows.apk').write_bytes(fake_apk)
         check(server.call('signup', {'username': 'third', 'password': 'test-only long passphrase', 'invite': server.invites['iris_invite']})[0] == 403, 'One-use invite')
         check(server.call('invite', {}, member)[0] == 403, 'Member cannot invite')
         check(len(server.call('invite', {}, owner)[1]['invite']) == 48, 'Owner can invite')

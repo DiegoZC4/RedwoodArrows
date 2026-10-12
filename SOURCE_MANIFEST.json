@@ -22,8 +22,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4816,
-      "sha256": "19e3ed7eb55121fb02b86c95d5aa19ca1e32f859892f5f7dbcdf879a4b9bfd2d"
+      "bytes": 5601,
+      "sha256": "629a1ddbd4a7aa29c28e813afbec6c47cdfb5052ef98244347b7b665ca544cf1"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -122,13 +122,13 @@
     },
     {
       "path": "server/README.md",
-      "bytes": 6324,
-      "sha256": "13aa742a76ea00fa871242486b4d4caf9d58fd49cc59c8fbe1680ded43767591"
+      "bytes": 7435,
+      "sha256": "8b9af3a12f4cfb7e4b193e667fc55697e1a80792a773208dc8be8806f30d7b4c"
     },
     {
       "path": "server/app.php",
-      "bytes": 18223,
-      "sha256": "824d38bfb0d2a23f63444709d2e4ab18a8db9e18f26768f3dc9ca083b1e8b733"
+      "bytes": 19980,
+      "sha256": "7d1d5cdb88650baeb794298672258d2d784281576eecc4190659bddc74eda87e"
     },
     {
       "path": "server/cli.php",
@@ -392,8 +392,8 @@
     },
     {
       "path": "tests/test_sync_server.py",
-      "bytes": 11526,
-      "sha256": "e0b108cefd861726c5cb46e9deabea6e92955444ebf8f5876171ee266ab95064"
+      "bytes": 12654,
+      "sha256": "a8531b30b68d2ef24dc95dba70a55c731758cb54e41e38f09aba2e0fe9e733a7"
     },
     {
       "path": "tools/build_beta.sh",

@@ -102,6 +102,15 @@ final class Redwood {
         $items=[];while($r=$s->fetch(PDO::FETCH_ASSOC))$items[]=['id'=>$r['id'],'revision'=>(int)$r['revision']];
         return ['changes'=>$items];
     }
+    public function release(): array {
+        // Fixed private paths only. Credentials never appear in download URLs.
+        $path=$this->directory.'/release/RedwoodArrows.apk';
+        $manifest=$this->directory.'/release/manifest.json';
+        if(!is_file($path)||!is_file($manifest))throw new RedwoodError(503,'App download is not available yet');
+        $r=json_decode(file_get_contents($manifest,false,null,0,8192),true,16,JSON_THROW_ON_ERROR);
+        if(!is_array($r)||!is_int($r['bytes']??null)||$r['bytes']<1||$r['bytes']>=100000000||!is_string($r['sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$r['sha256'])||!is_string($r['version']??null)||!is_string($r['certificate_sha256']??null)||!preg_match('/^[a-f0-9]{64}$/D',$r['certificate_sha256'])||($r['package']??null)!=='org.redwoodarrows'||filesize($path)!==$r['bytes']||!hash_equals($r['sha256'],hash_file('sha256',$path)))throw new RedwoodError(503,'App download could not be verified');
+        return ['version'=>$r['version'],'package'=>$r['package'],'bytes'=>$r['bytes'],'sha256'=>$r['sha256'],'certificate_sha256'=>$r['certificate_sha256'],'minimum_android'=>12,'architecture'=>'arm64-v8a','apk_action'=>'apk'];
+    }
     public function save(array $input,array $user): array {
         $id=self::id((string)($input['id']??''));$body=$input['body']??null;$photos=$input['photos']??null;$base=$input['base']??null;
         if(!is_string($body)||strlen($body)>self::DOCUMENT_LIMIT||!is_int($base)||$base<0||!is_array($photos)||!array_is_list($photos)||count($photos)>64)throw new RedwoodError(400,'Invalid grouping');
@@ -184,7 +193,17 @@ function redwood_http(string $directory): void {
         $app=new Redwood($directory);$action=(string)($_GET['action']??'health');$method=$_SERVER['REQUEST_METHOD'];
         $auth=$_SERVER['HTTP_AUTHORIZATION']??$_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'';
         $token=str_starts_with($auth,'Bearer ')?substr($auth,7):'';
-        if($action==='photo'){
+        if($action==='apk'||$action==='release'){
+            $app->authenticate($token);
+            if($method!=='GET')throw new RedwoodError(405,'Method not allowed');
+            $result=$app->release();
+            if($action==='apk'){
+                header('Content-Type: application/vnd.android.package-archive');
+                header('Content-Disposition: attachment; filename="RedwoodArrows.apk"');
+                header('Content-Length: '.$result['bytes']);
+                readfile($directory.'/release/RedwoodArrows.apk');return;
+            }
+        }elseif($action==='photo'){
             $app->authenticate($token);$hash=Redwood::hash((string)($_GET['hash']??''));
             if($method==='PUT'){$in=fopen('php://input','rb');try{$result=$app->putPhoto($hash,$in);}finally{fclose($in);}}
             elseif($method==='GET'){
