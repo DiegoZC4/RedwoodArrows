@@ -12,8 +12,8 @@
     },
     {
       "path": "AndroidManifest.xml",
-      "bytes": 2240,
-      "sha256": "8d1642f2b615d85007c9b78da4495e32b71f7f91e44fc0fb690477e37cf154c8"
+      "bytes": 2237,
+      "sha256": "33e9270bc4029409a7103531510557b55aa35e1ad4bedf65699bf5c85293c0fa"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7057,
-      "sha256": "86e588011b618f3f0deb5ee3ce401262b81f40eff02c781100f89c787b9a5797"
+      "bytes": 7757,
+      "sha256": "05a32771494a99da4b71136535b5d3127f74c61548c0e05d2290d658b50f8a3f"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -37,8 +37,8 @@
     },
     {
       "path": "UPDATING.md",
-      "bytes": 752,
-      "sha256": "025aaa7719b8667ddaee95645d713968ae4a3c39bf2b527aaf7af4aff1828b7c"
+      "bytes": 1064,
+      "sha256": "374c40b1cfd11d0fe560dd79e5339669134f18b0b60d3b5854d8c019309236fe"
     },
     {
       "path": "assets/hybrid/arrow-recognizer.onnx",
@@ -171,6 +171,11 @@
       "sha256": "ff68fc4d35a26a0db851df5cbf1d2b0bf89e24d9d9fce2d856b6c299f2200c07"
     },
     {
+      "path": "src/org/redwoodarrows/AppUpdates.java",
+      "bytes": 3840,
+      "sha256": "f4240fecbacd5456fbfd47bf080faa37c1727217726aee3aac14a39072370500"
+    },
+    {
       "path": "src/org/redwoodarrows/CyclicPagerMotion.java",
       "bytes": 2758,
       "sha256": "204aabbbadc0344ae0a1ba7d955c6162d43e8b7118e3de5e001aeaef1b2f520b"
@@ -227,8 +232,8 @@
     },
     {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 41865,
-      "sha256": "85eca57c077877f9887940ee8cc582096bbf753b24281e4067c95e35eeaf4840"
+      "bytes": 43179,
+      "sha256": "de579742fd95794a6f081fa6cf6aad07c07b7be9c0be766a4a70a971a5e9cdae"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -269,6 +274,11 @@
       "path": "src/org/redwoodarrows/QuickCapture.java",
       "bytes": 3190,
       "sha256": "7297261dd7af5a9f362455d31f1297d809d5598102a50276366d2796fd3ae7eb"
+    },
+    {
+      "path": "src/org/redwoodarrows/ReleaseUpdate.java",
+      "bytes": 6884,
+      "sha256": "9a3c3891fbee7530c586e3c8a79898aea1ea44c5e32784ab3ccdb94e560b21b3"
     },
     {
       "path": "src/org/redwoodarrows/ShooterPager.java",
@@ -421,6 +431,11 @@
       "sha256": "c450750f3fb070387ec15874633ced7015c800aaf49844635288e85851ae4484"
     },
     {
+      "path": "tests/ReleaseUpdateTest.java",
+      "bytes": 6546,
+      "sha256": "99ec497cbbba38f905b883c1c7c7a146a6dceea2859d4e3eba57670dd01a2296"
+    },
+    {
       "path": "tests/SyncEngineTest.java",
       "bytes": 11079,
       "sha256": "9590a6b1b02f3c03544a16970931bcabb6cd8eb19763897700f996c8a19df805"
@@ -452,8 +467,8 @@
     },
     {
       "path": "tools/test_sync.sh",
-      "bytes": 1008,
-      "sha256": "7cc57383d5f95e7836ac1969efe0d904d8f8640f3606798e79c63143242a811b"
+      "bytes": 1248,
+      "sha256": "dc9b947f19f87fd7d278777d7ca492ff71da7b731e6887e85a074b6b82fe839e"
     }
   ],
   "personal_photos": 0,

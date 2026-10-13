@@ -1,6 +1,8 @@
 # Updating
 
-Download [RedwoodArrows.apk](https://github.com/DiegoZC4/RedwoodArrows/releases/latest/download/RedwoodArrows.apk), open it, and choose **Update**. Do not uninstall or clear app data. Sign-in survives updates.
+From version 0.21, the app checks GitHub on opening and offers an **Update** button when a newer version is available. Tap it, open the APK, and confirm **Update**. Do not uninstall or clear app data. Sign-in survives updates.
+
+For older versions or a manual download: [RedwoodArrows.apk](https://github.com/DiegoZC4/RedwoodArrows/releases/latest/download/RedwoodArrows.apk). Install this once to enable automatic update notices. Checks are quiet offline and cached for 15 minutes; installers download only after you tap.
 
 For an AI/helper: use the latest GitHub release, not an old email's version or checksum. Verify `SHA256SUMS.txt` and the APK signer below, then install in place (`adb install -r RedwoodArrows.apk` if using ADB). No sync password, GitHub token, or account reset is needed to update.
 

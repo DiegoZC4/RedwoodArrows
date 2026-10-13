@@ -4,8 +4,18 @@
 
 To update, download and open the APK, then choose **Update**. **Do not uninstall**
 or clear storage: your existing sign-in, photos and groupings stay saved. In the
-app, **More → Download app update** opens the same permanent link. No GitHub
+app, **More → Download app update** opens the same permanent link. From version
+0.21 onward, opening the app also checks GitHub quietly and shows an **Update**
+button beside the sync status when a newer installer is available. No GitHub
 account or new sync login is needed. See [UPDATING.md](UPDATING.md) for assistants.
+
+Update checks fetch only public release metadata, not the APK or your library
+data. They run off the UI thread on opening/resuming the app and when a validated
+internet connection returns while it is open; successful results are cached for
+15 minutes. Offline use stays quiet. There is no background polling, forced
+update, or automatic APK download. Tap **Update**, then confirm the normal
+Android installation; do not uninstall. Same/older versions, prereleases,
+incomplete uploads and APK links outside this repository are not offered.
 
 An offline-first Android 12+ (arm64) archery grouping tracker. Photographs,
 calibration, shooter, practice context and estimated 2D positions save on the
