@@ -10,6 +10,8 @@ import java.util.*;
 final class SyncEngine {
     interface Transport {JSONObject json(String action,JSONObject input)throws Exception;void upload(String hash,File file)throws Exception;void download(String hash,File file,long size)throws Exception;}
     final Store store;final File directory,stateFile;final Transport remote;JSONObject state,entries;int uploaded,downloaded;
+    String phase="starting";java.util.function.Consumer<String> progress;
+    private void progress(String next,String message){phase=next;if(progress!=null)progress.accept(message);}
     SyncEngine(Store store,File directory,Transport remote)throws Exception {
         this.store=store;this.directory=directory;this.remote=remote;directory.mkdirs();stateFile=new File(directory,"state.json");
         state=stateFile.isFile()?new JSONObject(SyncFiles.read(stateFile)):new JSONObject().put("cursor",0).put("entries",new JSONObject());entries=state.getJSONObject("entries");
@@ -27,31 +29,35 @@ final class SyncEngine {
     private File conflictFile(String id)throws Exception {return new File(directory,"conflict-"+SyncFiles.id(id)+".json");}
     private void clearConflict(String id)throws Exception {File f=conflictFile(id);if(f.exists()&&!f.delete())throw new IOException("Could not clear the resolved conflict");}
     void run()throws Exception {
+        progress("authenticate","Checking shared library…");
         bind(remote.json("me",null).getString("library"));
         JSONObject deferred=state.optJSONObject("deferred");if(deferred==null){deferred=new JSONObject();state.put("deferred",deferred);}
         List<String> waiting=new ArrayList<>();Iterator<String> keys=deferred.keys();while(keys.hasNext())waiting.add(keys.next());
-        for(String id:waiting){interrupted();pull(remote.json("group&id="+SyncFiles.id(id),null),deferred);persist();}
+        for(String id:waiting){interrupted();progress("read_group","Checking shared edits…");pull(remote.json("group&id="+SyncFiles.id(id),null),deferred);persist();}
         // Pull before push. Shared shooter IDs arrive along with the group snapshots.
         int pages=0;boolean more;
         do{
+            progress("read_changes","Checking for new groupings…");
             JSONArray changes=remote.json("changes&after="+state.optLong("cursor"),null).getJSONArray("changes");more=changes.length()==50;
             for(int i=0;i<changes.length();i++){
                 interrupted();JSONObject change=changes.getJSONObject(i);String id=SyncFiles.id(change.getString("id"));
-                JSONObject wire=remote.json("group&id="+id,null);pull(wire,deferred);
+                progress("read_group","Downloading groupings · "+(i+1)+" / "+changes.length());JSONObject wire=remote.json("group&id="+id,null);pull(wire,deferred);
                 state.put("cursor",change.getLong("revision"));persist();
             }
         }while(more&&++pages<20); // Bounded jobs; the next run continues the saved cursor.
         if(more)throw new IOException("More groupings remain; continuing in the next sync job");
         for(Store.Group group:store.list()){
+            phase="scan_local";
             interrupted();if(!group.hasData()||(!group.keepPhotos&&!group.coordinatesOnly()&&!group.views.isEmpty()))continue;
             String id=group.id;if(conflictFile(id).isFile())continue;
             SyncFiles.Snapshot snapshot=local(id);JSONObject base=entry(id);
             if(snapshot==null||snapshot.fingerprint.equals(base.optString("fingerprint")))continue;
             try{push(snapshot,base.optLong("revision"));}catch(SyncHttp.Failure e){if(e.status!=409)throw e;conflict(id,remote.json("group&id="+id,null));}
         }
-        state.put("last_success",System.currentTimeMillis());persist();
+        state.put("last_success",System.currentTimeMillis());persist();phase="complete";
     }
     private void pull(JSONObject wire,JSONObject deferred)throws Exception {
+        phase="validate_group";
         SyncFiles.Snapshot incoming=SyncFiles.Snapshot.remote(wire);String id=incoming.id;
         SyncFiles.Snapshot now=local(id);JSONObject base=entry(id);
         if(now!=null&&now.fingerprint.equals(incoming.fingerprint)){ack(id,wire.getLong("revision"),incoming.fingerprint);clearConflict(id);}
@@ -63,19 +69,21 @@ final class SyncEngine {
     }
     private static void interrupted()throws InterruptedIOException {if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("Sync paused; saved locally");}
     private void push(SyncFiles.Snapshot snapshot,long revision)throws Exception {
+        progress("upload_group","Uploading saved groupings…");
         JSONArray hashes=new JSONArray();Map<String,JSONObject> photos=new HashMap<>();
         for(int i=0;i<snapshot.photos.length();i++){JSONObject p=snapshot.photos.getJSONObject(i);hashes.put(p.getString("sha256"));photos.put(p.getString("sha256"),p);}
         JSONArray missing=remote.json("missing",new JSONObject().put("hashes",hashes)).getJSONArray("missing");
         for(int i=0;i<missing.length();i++){
             interrupted();String hash=missing.getString(i);JSONObject p=photos.get(hash);if(p==null)throw new IOException("Unexpected server photo request");
-            File file=new File(groupFile(snapshot.id).getParentFile(),SyncFiles.photo(p.getString("file")));
+            phase="upload_photo";File file=new File(groupFile(snapshot.id).getParentFile(),SyncFiles.photo(p.getString("file")));
             if(!hash.equals(SyncFiles.hash(file)))throw new IOException("Photo changed while syncing; retrying later");remote.upload(hash,file);
         }
-        JSONObject accepted=remote.json("save",snapshot.wire(revision));
+        phase="save_group";JSONObject accepted=remote.json("save",snapshot.wire(revision));
         if(!snapshot.fingerprint.equals(accepted.getString("fingerprint")))throw new IOException("Server acknowledgement did not match this grouping");
         ack(snapshot.id,accepted.getLong("revision"),snapshot.fingerprint);uploaded++;
     }
     private boolean apply(JSONObject wire,String expectedLocal)throws Exception {
+        phase="download_photo";
         SyncFiles.Snapshot incoming=SyncFiles.Snapshot.remote(wire);File dest=groupFile(incoming.id),folder=dest.getParentFile();folder.mkdirs();
         // Immutable image names may be installed first. A crash leaves harmless,
         // verified orphan files, never a visible half-downloaded grouping.
@@ -85,6 +93,7 @@ final class SyncEngine {
             File partial=new File(directory,"download.part");try{remote.download(hash,partial,p.getLong("bytes"));if(partial.length()!=p.getLong("bytes")||!SyncFiles.hash(partial).equals(hash))throw new IOException("Photo checksum failed");synchronized(Store.FILE_LOCK){if(photo.exists()){if(!SyncFiles.hash(photo).equals(hash))throw new IOException("Photo changed during download");}else if(!partial.renameTo(photo))throw new IOException("Could not save the downloaded photo");}}finally{if(partial.exists())partial.delete();}
         }
         synchronized(Store.FILE_LOCK){
+            phase="commit_group";
             if(incoming.id.equals(Store.editingGroupId))return false;
             SyncFiles.Snapshot now=local(incoming.id);String current=now==null?null:now.fingerprint;
             if(!Objects.equals(current,expectedLocal))return false;

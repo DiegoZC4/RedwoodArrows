@@ -11,8 +11,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class SyncRuntime extends Application {
     static final ExecutorService network=Executors.newSingleThreadExecutor();
     static final AtomicLong generation=new AtomicLong();
+    static final AtomicLong libraryGeneration=new AtomicLong();
     static volatile String status="Saved on this phone";
-    static volatile boolean running;
+    static volatile boolean running,lastAttemptSucceeded;
     static volatile Runnable uiChanged;
     static File directory(Context c){return new File(c.getFilesDir(),"sync");}
     @Override public void onCreate(){super.onCreate();Context c=getApplicationContext();
@@ -27,15 +28,15 @@ public final class SyncRuntime extends Application {
     static synchronized Future<?> request(Context context,Runnable done){
         Context c=context.getApplicationContext();
         return network.submit(()->{
-            long start=generation.get();running=true;
+            long start=generation.get(),started=System.currentTimeMillis();running=true;lastAttemptSucceeded=false;SyncEngine engine=null;Exception failure=null;String phase="read_sign_in";
             try{
                 JSONObject session=new SyncSession(c).read();if(session==null){status="Saved on this phone";return;}
-                status="Syncing…";notifyUi();SyncEngine engine=engine(c,session);engine.run();
+                status="Checking shared library…";notifyUi();engine=engine(c,session);
+                engine.progress=message->{status=message;notifyUi();};engine.run();lastAttemptSucceeded=true;
                 int conflicts=engine.conflicts().size();status=conflicts>0?conflicts+" edit conflict"+(conflicts==1?"":"s"):engine.state.optJSONObject("deferred").length()>0?"Saved · shared update waiting":generation.get()!=start?"Saved · waiting to sync":"Synced · just now";
                 if(generation.get()!=start)SyncJobs.schedule(c);
-            }catch(SyncHttp.Failure e){status=e.status==401?"Saved · sign in to sync":e.status==507?"Saved · cloud storage full":"Saved · sync will retry";}
-            catch(Exception e){status="Saved · sync will retry";}
-            finally{running=false;notifyUi();if(done!=null)done.run();}
+            }catch(Exception e){failure=e;status=SyncDiagnostics.status(e);}
+            finally{if(engine!=null&&engine.downloaded>0)libraryGeneration.incrementAndGet();try{if(failure!=null||lastAttemptSucceeded)SyncDiagnostics.save(directory(c),SyncDiagnostics.report(started,engine==null?phase:engine.phase,engine==null?0:engine.uploaded,engine==null?0:engine.downloaded,failure));}catch(Exception ignored){}running=false;notifyUi();if(done!=null)done.run();}
         });
     }
 }

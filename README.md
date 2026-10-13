@@ -71,7 +71,14 @@ reviewed before contributing coordinates. This correction syncs offline-first.
    syncing when a network is available; **Sync now** is also available.
 
 Android may defer background jobs in battery saver/Doze or after a force-stop.
-Open the app to resume promptly. Do not uninstall/clear storage with unsynced
+Opening/resuming the app or regaining a validated connection now retries
+immediately. While open, the app checks for shared edits once per minute;
+temporary failures retry after 15 seconds with capped backoff. These foreground
+checks stop when you leave the app; Android still schedules background work.
+Download progress and specific connection errors appear in the existing sync
+status. A bounded, app-private diagnostic receipt excludes credentials, photos
+and labels. Unchanged syncs do not rebuild the gallery while you are labeling.
+Do not uninstall/clear storage with unsynced
 shots. Signing out retains offline photos and coordinates on the unlocked phone.
 Sign-in has no routine time limit and survives normally signed, in-place app
 updates. Do not uninstall/reinstall to update: that erases the device's sign-in

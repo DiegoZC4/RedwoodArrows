@@ -25,7 +25,7 @@ public final class MainActivity extends Activity {
     ShootersUi shooters;
     Store.ShooterEdit shooterUndo;
     ProgressUi progress;boolean returnToProgress;
-    TextView syncStatus;long syncRefreshAt;AppUpdates updates;Button updateButton;PhotoImport photoImport;boolean photoOnly;
+    TextView syncStatus;long gallerySyncedGeneration;ForegroundSync foregroundSync;AppUpdates updates;Button updateButton;PhotoImport photoImport;boolean photoOnly;
     final Runnable updateRefresh=this::refreshUpdate;
     GroupImages groupImages;GroupImageViewer imageViewer;TargetPicker targetPicker;
     GroupingGallery groupingGallery;android.os.Parcelable groupGridState;String groupGridFilter="";boolean catalogForCapture;
@@ -37,11 +37,11 @@ public final class MainActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state){super.onSaveInstanceState(state);photoImport.save(state);}
     private boolean debugQaAllowed(){return (getApplicationInfo().flags&android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0;}
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);if(debugQaAllowed()&&intent.getBooleanExtra("qa",false))runQa();}
-    @Override protected void onPause(){if(updates!=null)updates.stop(updateRefresh);super.onPause();if(sweep!=null){closeCamera();analysis=null;if(group!=null&&!group.views.isEmpty()){if(photoOnly)results();else editor();}else home();}}
-    @Override protected void onResume(){super.onResume();if(updates==null)updates=AppUpdates.get(this);updates.start(updateRefresh);SyncRuntime.uiChanged=()->runOnUiThread(this::refreshSync);if(new SyncSession(this).present()){SyncJobs.schedule(this);if(System.currentTimeMillis()-syncRefreshAt>60000){syncRefreshAt=System.currentTimeMillis();SyncRuntime.request(this,null);}}}
+    @Override protected void onPause(){if(foregroundSync!=null)foregroundSync.stop();if(updates!=null)updates.stop(updateRefresh);super.onPause();if(sweep!=null){closeCamera();analysis=null;if(group!=null&&!group.views.isEmpty()){if(photoOnly)results();else editor();}else home();}}
+    @Override protected void onResume(){super.onResume();if(updates==null)updates=AppUpdates.get(this);updates.start(updateRefresh);SyncRuntime.uiChanged=()->runOnUiThread(this::refreshSync);if(new SyncSession(this).present())SyncJobs.schedule(this);if(foregroundSync==null)foregroundSync=new ForegroundSync(this);foregroundSync.start();}
     @Override protected void onDestroy(){if(updates!=null)updates.stop(updateRefresh);SyncRuntime.uiChanged=null;Store.editingGroupId=null;if(imageViewer!=null)imageViewer.dismiss();if(targetPicker!=null)targetPicker.closeWithActivity();closeCamera();worker.shutdown();super.onDestroy();}
     void refreshUpdate(){if(isDestroyed()||!page.equals("home")||updateButton==null)return;ReleaseUpdate.Release release=updates==null?null:updates.available();updateButton.setVisibility(release==null?View.GONE:View.VISIBLE);if(release!=null){String label="Update to "+release.version()+" · "+Math.round(release.bytes/1_000_000.)+" MB. Opens GitHub; install over this app to keep your sign-in.";updateButton.setContentDescription(label);updateButton.setTooltipText(label);}}
-    void refreshSync(){if(isDestroyed())return;if(syncStatus!=null){syncStatus.setText(SyncRuntime.status+"  ·  ☁");syncStatus.setContentDescription("Shared library. "+SyncRuntime.status+". Tap to manage sign-in and sync.");}if(!busy&&!SyncRuntime.running&&page.equals("home")){shooters=new ShootersUi(this);groupImages.thumbs.evictAll();rememberGroups();home();}}
+    void refreshSync(){if(isDestroyed())return;if(syncStatus!=null){syncStatus.setText(SyncRuntime.status+"  ·  ☁");syncStatus.setContentDescription("Shared library. "+SyncRuntime.status+". Tap to manage sign-in and sync.");}if(!busy&&!SyncRuntime.running&&page.equals("home")&&gallerySyncedGeneration!=SyncRuntime.libraryGeneration.get()){shooters=new ShootersUi(this);groupImages.thumbs.evictAll();rememberGroups();home();}}
     int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
     TextView text(String s,float size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,dp(5),0,dp(5));return t;}
     GradientDrawable rounded(int color){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(14));return d;}
@@ -57,7 +57,7 @@ public final class MainActivity extends Activity {
         Button trends=button("Progress",this::showProgress);trends.setTag("show-progress");header.addView(trends,1,new LinearLayout.LayoutParams(dp(84),dp(44)));
         LinearLayout statusRow=row();statusRow.setGravity(Gravity.CENTER_VERTICAL);updateButton=button("Update",()->{ReleaseUpdate.Release release=updates==null?null:updates.available();if(release!=null)openUpdateUrl(release.url);});updateButton.setTag("app-update");updateButton.setBackground(rounded(ACCENT));updateButton.setTextColor(BG);statusRow.addView(updateButton,new LinearLayout.LayoutParams(dp(88),dp(44)));updateButton.setVisibility(View.GONE);
         syncStatus=text(SyncRuntime.status+"  ·  ☁",12,MUTED);syncStatus.setTag("shared-library");syncStatus.setMinHeight(dp(36));syncStatus.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);syncStatus.setOnClickListener(v->new SyncUi(this).show());syncStatus.setContentDescription("Shared library. "+SyncRuntime.status+". Tap to manage sign-in and sync.");statusRow.addView(syncStatus,new LinearLayout.LayoutParams(0,-2,1));add(root,statusRow);refreshUpdate();
-        groupingGallery=new GroupingGallery(this,store.list());groupingGallery.show();
+        gallerySyncedGeneration=SyncRuntime.libraryGeneration.get();groupingGallery=new GroupingGallery(this,store.list());groupingGallery.show();
         QuickCapture.show(this);
     }
     void quickCapture(){if(busy||!page.equals("home"))return;photoOnly=false;rememberGroups();if(newGroup()){page="capture-start";camera();}}
