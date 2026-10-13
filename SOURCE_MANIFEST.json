@@ -197,8 +197,8 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupDetails.java",
-      "bytes": 8923,
-      "sha256": "26fb9165719f2dac35e516fb3b4d255ca9e053b391bde1f769a87cc13b7953b6"
+      "bytes": 8928,
+      "sha256": "cd7dec34007bfbfc570691df3557d2f8b66f23e8f4aa2b390a4525339fa97834"
     },
     {
       "path": "src/org/redwoodarrows/GroupImageViewer.java",
@@ -207,8 +207,8 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupImages.java",
-      "bytes": 7117,
-      "sha256": "081302a90d1e6b4b326edf78b30ba82bd230ec1540ac64d77bb5fe14607f5f92"
+      "bytes": 7284,
+      "sha256": "07cf2217a0c46bdb2e76255c44bed431fa0b09b15963d93cc76a56619596a287"
     },
     {
       "path": "src/org/redwoodarrows/GroupPresentation.java",
