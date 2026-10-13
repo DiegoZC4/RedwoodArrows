@@ -18,8 +18,15 @@ public final class Vision {
         public List<double[]> outer,inner;public Geometry.Calibration calibration;
     }
     public static Rings rings(Bitmap bitmap,String type){
-        if(!type.equals("Field"))throw new IllegalArgumentException("For Hunter faces, mark the outer rim and white bull manually");
-        Mat original=gray(bitmap),g=new Mat(),binary=new Mat(),hierarchy=new Mat();List<MatOfPoint> contours=new ArrayList<>();
+        return ringCandidates(bitmap,type,false).get(0);
+    }
+    /** Every plausible face, not just the largest one. Selection stays explicit. */
+    public static List<Rings> ringCandidates(Bitmap bitmap,String type){return ringCandidates(bitmap,type,true);}
+    private static List<Rings> ringCandidates(Bitmap bitmap,String type,boolean all){
+        if(!type.equals("Field")&&!type.equals("Hunter"))throw new IllegalArgumentException("Mark this design's rings manually");
+        double innerRadius=type.equals("Field")?.6:.2;
+        List<Rings> results=new ArrayList<>();
+        Mat original=gray(bitmap),g=new Mat(),binary=new Mat(),edges=new Mat(),hierarchy=new Mat();List<MatOfPoint> contours=new ArrayList<>();
         double scale=Math.min(1,1200.0/Math.max(bitmap.getWidth(),bitmap.getHeight()));
         Mat kernel=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(7,7));
         Mat opening=Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(11,11));
@@ -30,6 +37,10 @@ public final class Vision {
             // disconnected regions. This is proposal-only, not hole detection.
             Imgproc.morphologyEx(binary,binary,Imgproc.MORPH_OPEN,opening);Imgproc.morphologyEx(binary,binary,Imgproc.MORPH_CLOSE,kernel);
             Imgproc.findContours(binary,contours,hierarchy,Imgproc.RETR_LIST,Imgproc.CHAIN_APPROX_NONE);
+            // Shafts can split the filled white band. Edge arcs supply extra
+            // ellipse seeds for explicit selection, still verified against BOTH
+            // physical color boundaries below. Keep unattended legacy behavior.
+            if(all){List<MatOfPoint> arcs=new ArrayList<>();Imgproc.Canny(g,edges,30,90);Imgproc.findContours(edges,arcs,hierarchy,Imgproc.RETR_LIST,Imgproc.CHAIN_APPROX_NONE);contours.addAll(arcs);}
             List<RotatedRect> ellipses=new ArrayList<>();
             for(MatOfPoint c:contours){if(c.rows()<50)continue;MatOfPoint2f f=new MatOfPoint2f(c.toArray());RotatedRect e;try{e=Imgproc.fitEllipse(f);}finally{f.release();}
                 double small=Math.min(e.size.width,e.size.height),large=Math.max(e.size.width,e.size.height);
@@ -40,18 +51,44 @@ public final class Vision {
             }
             Collections.sort(ellipses,(a,b)->Double.compare(b.size.area(),a.size.area()));
             byte[] pixels=new byte[g.rows()*g.cols()];g.get(0,0,pixels);
-            for(RotatedRect e:ellipses){try{
-                Rings result=new Rings();result.inner=edgePoints(e,1,-1,pixels,g.cols(),g.rows(),scale);
-                result.outer=edgePoints(e,1/.6,1,pixels,g.cols(),g.rows(),scale);
+            // Hunter's .6 scoring line often survives when shafts obscure the
+            // outer rim. Let either line seed the same physical .2/1 pair.
+            double[] seedRadii=type.equals("Field")?(all?new double[]{1,.6}:new double[]{1}):(all?new double[]{.2,1.0/3}:new double[]{.2});
+            for(RotatedRect e:ellipses)for(double seed:seedRadii){try{
+                Rings result=new Rings();result.inner=edgePoints(e,seed,-1,pixels,g.cols(),g.rows(),scale);
+                result.outer=edgePoints(e,seed/innerRadius,type.equals("Hunter")?2:1,pixels,g.cols(),g.rows(),scale);
                 if(result.outer.size()<12||result.inner.size()<12)continue;
-                Geometry.Calibration fit=Geometry.calibrate(result.outer,result.inner,.6,bitmap.getWidth(),bitmap.getHeight());
+                if(all){result.outer=ringConsensus(result.outer);result.inner=ringConsensus(result.inner);}
+                Geometry.Calibration fit=Geometry.calibrate(result.outer,result.inner,innerRadius,bitmap.getWidth(),bitmap.getHeight());
                 // Trim worn-hole outliers once, preserving the orientation reference.
-                List<double[]> out=trim(result.outer,fit,1),in=trim(result.inner,fit,.6);
-                if(out.size()>=12&&in.size()>=12)fit=Geometry.calibrate(out,in,.6,bitmap.getWidth(),bitmap.getHeight());
-                if(fit.rms>.025)continue;fit.source="automatic two-ring proposal";result.outer=out;result.inner=in;result.calibration=Geometry.imageUp(fit);return result;
+                List<double[]> out=trim(result.outer,fit,1),in=trim(result.inner,fit,innerRadius);
+                if(out.size()>=12&&in.size()>=12)fit=Geometry.calibrate(out,in,innerRadius,bitmap.getWidth(),bitmap.getHeight());
+                if(fit.rms>.025)continue;fit.source="automatic two-ring proposal";result.outer=out;result.inner=in;result.calibration=Geometry.imageUp(fit);
+                double[] center=Geometry.project(Geometry.inverse(result.calibration.h),0,0);boolean duplicate=false;
+                for(Rings prior:results){double[] q=prior.calibration.map(center[0],center[1]);if(Math.hypot(q[0],q[1])<.15){duplicate=true;break;}}
+                if(!duplicate)results.add(result);
+                if(!all||results.size()>=16)return results;
             }catch(RuntimeException ignored){}}
+            if(!results.isEmpty())return results;
             throw new IllegalArgumentException("The worn rings need manual marks. Use Rings, then mark clean rim sections on all four sides.");
-        }finally{original.release();g.release();binary.release();hierarchy.release();kernel.release();opening.release();for(Mat m:contours)m.release();}
+        }finally{original.release();g.release();binary.release();edges.release();hierarchy.release();kernel.release();opening.release();for(Mat m:contours)m.release();}
+    }
+    /** Robust conic consensus removes shaft/hole edges before the strict
+     * two-circle projective fit. No arrow labels or target center are used.
+     * A majority of each sampled rim must agree; missing arcs are not invented. */
+    private static List<double[]> ringConsensus(List<double[]> points){
+        Random random=new Random(419+points.size());List<double[]> best=new ArrayList<>();double bestError=Double.POSITIVE_INFINITY;
+        for(int trial=0;trial<80;trial++){
+            Set<Integer> used=new HashSet<>();Point[] sample=new Point[6];for(int i=0;i<sample.length;i++){int at;do{at=random.nextInt(points.size());}while(!used.add(at));double[] p=points.get(at);sample[i]=new Point(p[0],p[1]);}
+            MatOfPoint2f input=new MatOfPoint2f(sample);try{
+                RotatedRect e=Imgproc.fitEllipse(input);double small=Math.min(e.size.width,e.size.height),large=Math.max(e.size.width,e.size.height);
+                if(!Double.isFinite(large)||small<10||large>20000||small/large<.12)continue;
+                double a=Math.toRadians(e.angle),co=Math.cos(a),si=Math.sin(a),error=0;List<double[]> accepted=new ArrayList<>();
+                for(double[] p:points){double x=p[0]-e.center.x,y=p[1]-e.center.y;double d=Math.abs(Math.hypot((x*co+y*si)/(e.size.width/2),(-x*si+y*co)/(e.size.height/2))-1);if(d<.04){accepted.add(p);error+=d*d;}}
+                if(accepted.size()>best.size()||accepted.size()==best.size()&&error<bestError){best=accepted;bestError=error;}
+            }catch(RuntimeException ignored){}finally{input.release();}
+        }
+        if(best.size()<Math.max(12,points.size()*.6))throw new IllegalArgumentException("Too little clean ring evidence");return best;
     }
     private static List<double[]> trim(List<double[]> points,Geometry.Calibration fit,double radius){List<double[]> out=new ArrayList<>();for(int i=0;i<points.size();i++){double[] p=points.get(i),q=fit.map(p[0],p[1]);if(i==0||Math.abs(Math.hypot(q[0],q[1])-radius)<.027)out.add(p);}return out;}
     private static List<double[]> edgePoints(RotatedRect e,double radius,int sign,byte[] pixels,int w,int h,double scale){
@@ -60,10 +97,14 @@ public final class Vision {
             double best=-1,bestRadius=0;
             for(double r=radius*.79;r<=radius*1.21;r+=1.0/len){double x=e.center.x+r*dx,y=e.center.y+r*dy;double delta=3/len;
                 double inside=sample(pixels,w,h,x-delta*dx,y-delta*dy),outside=sample(pixels,w,h,x+delta*dx,y+delta*dy);
-                if(inside<0||outside<0)continue;double contrast=sign*(outside-inside);double score=contrast-35*Math.abs(r-radius)/radius;
-                if(contrast>24&&score>best){best=score;bestRadius=r;}
+                if(inside<0||outside<0)continue;
+                // Hunter's outer rim is a thin white line on black paper,
+                // not Field's black-to-white area boundary. Fit its bright
+                // ridge center, not an arbitrary edge of the printed line.
+                double contrast=sign==2?sample(pixels,w,h,x,y)-Math.max(inside,outside):sign*(outside-inside);double score=contrast-35*Math.abs(r-radius)/radius;
+                if(contrast>(sign==2?12:24)&&score>best){best=score;bestRadius=r;}
             }
-            if(best>18)points.add(new double[]{(e.center.x+bestRadius*dx)/scale,(e.center.y+bestRadius*dy)/scale});
+            if(best>(sign==2?10:18))points.add(new double[]{(e.center.x+bestRadius*dx)/scale,(e.center.y+bestRadius*dy)/scale});
         }return points;
     }
     private static double sample(byte[] p,int w,int h,double x,double y){int ix=(int)Math.round(x),iy=(int)Math.round(y);if(ix<1||iy<1||ix>=w-1||iy>=h-1)return -1;double sum=0;for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++)sum+=p[(iy+j)*w+ix+i]&255;return sum/9;}

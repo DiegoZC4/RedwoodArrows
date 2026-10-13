@@ -1,0 +1,42 @@
+{
+  "scope": "Personal experimental hybrid v1; training dependencies are not bundled into Android",
+  "python": "3.12.6",
+  "training_environment": {
+    "torch": "2.13.0",
+    "torchvision": "0.28.0",
+    "numpy": "2.2.6",
+    "pillow": "12.3.0",
+    "opencv-python-headless": "4.12.0.88",
+    "onnx-weekly": "1.24.0.dev20260914"
+  },
+  "pretrained_backbone": {
+    "source": "torchvision MobileNetV3-Small ImageNet1K V1",
+    "url": "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth",
+    "sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+    "code_license": "BSD-3-Clause; retain torchvision notice",
+    "weight_distribution_notice": "Check upstream source-dataset terms before public or commercial distribution"
+  },
+  "downloaded_wheels": [
+    {
+      "filename": "opencv_python_headless-4.12.0.88-cp37-abi3-macosx_13_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/f7/7d/414e243c5c8216a5277afd104a319cc1291c5e23f5eeef512db5629ee7f4/opencv_python_headless-4.12.0.88-cp37-abi3-macosx_13_0_arm64.whl",
+      "sha256": "1e58d664809b3350c1123484dd441e1667cd7bed3086db1b9ea1b6f6cb20b50e"
+    },
+    {
+      "filename": "numpy-2.2.6-cp312-cp312-macosx_14_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/3c/65/4baa99f1c53b30adf0acd9a5519078871ddde8d2339dc5a7fde80d9d87da/numpy-2.2.6-cp312-cp312-macosx_14_0_arm64.whl",
+      "sha256": "894b3a42502226a1cac872f840030665f33326fc3dac8e57c607905773cdcde3"
+    }
+  ],
+  "trained_model": {
+    "architecture": "redwood-mobilenetv3-small-s16-decoder-v1",
+    "parameters": 275418,
+    "bytes": 1123504,
+    "sha256": "0e542404f629f7da23d03c4b74b200642e410d0ffa153745ed5d6795ebc90729",
+    "synthetic_manifest_sha256": "5592a5c959c69f7fb86ce181a5c89b351377edbda98b5f7f3085948a84d3ef83",
+    "threshold": 0.3,
+    "threshold_selection": "Maximum shaft F1 on synthetic validation ends; neither test ends nor real annotations used",
+    "real_photo_training": false,
+    "automatic_logging_ready": false
+  }
+}

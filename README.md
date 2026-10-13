@@ -1,4 +1,11 @@
-# Redwood Arrows — private beta
+# Redwood Arrows
+
+**[Download the latest Android app](https://github.com/DiegoZC4/RedwoodArrows/releases/latest/download/RedwoodArrows.apk)** · [Release notes](https://github.com/DiegoZC4/RedwoodArrows/releases/latest)
+
+To update, download and open the APK, then choose **Update**. **Do not uninstall**
+or clear storage: your existing sign-in, photos and groupings stay saved. In the
+app, **More → Download app update** opens the same permanent link. No GitHub
+account or new sync login is needed. See [UPDATING.md](UPDATING.md) for assistants.
 
 An offline-first Android 12+ (arm64) archery grouping tracker. Photographs,
 calibration, shooter, practice context and estimated 2D positions save on the
@@ -6,13 +13,25 @@ phone first. Optional authenticated sync shares the same private library on
 diegozc.com. Signing in does not assign the photographed end to that account:
 choose the actual shooter separately.
 
+Distance is directly adjustable under each grouping's shooter and in the detail
+header: swipe left/right to increase/decrease, then release to save. Yard steps
+are 1 through 20, then 5. Tap for an exact distance or meters, hold to clear the
+base distance. Vertical swipes still scroll the gallery. Walk-up overrides and
+all saved coordinates remain intact. The next-end distance is remembered
+separately; correcting an old end never changes it.
+
+On a grouping photo, **Choose target** lets you tap the intended bullseye,
+inspect its ring overlay and save. Field/Hunter faces support automatic outlines
+and a printed-size correction; other designs use manual calibration. Cancel
+does not edit anything, arrow marks/photos stay intact, and future analysis
+keeps the selected reference face. Other views must have their new alignments
+reviewed before contributing coordinates. This correction syncs offline-first.
+
 ## Try it
 
-1. Obtain the signed `RedwoodArrows.apk` using the private download instructions
-   supplied with your account, or from a private GitHub release if one has been
-   published. The live authenticated download is hosted on diegozc.com; GitHub
-   access is not required. Permit installation from your browser when Android asks.
-2. Open **Shared library → Sign in** using your supplied account. Do not use
+1. Download the APK above and permit installation from your browser when Android
+   asks. Android 12+ and an arm64 phone are required. This is an experimental app.
+2. On a **first installation only**, open **Shared library → Sign in** using your supplied account. Do not use
    **Join library** for an account that already exists. New invitees without an
    account choose **Join library**, pick a username and password (12+ characters),
    and paste their private one-use invitation; invitations expire in seven days.
@@ -32,14 +51,6 @@ preferences and `redwood-sync-v1` Keystore alias stable across releases.
 The server keeps prior accepted versions and images for recovery; choosing
 “2D only” affects new ends, not a request to erase old cloud photos.
 
-For setup assistants: POST JSON `{username,password}` to
-`https://diegozc.com/redwood/api.php?action=login`. Keep the response token
-private, and pass it only in `Authorization: Bearer …` on GET `?action=release`
-and GET `?action=apk`. Verify the downloaded byte count, SHA-256 and signing
-certificate against the private handoff, then POST `{}` to `?action=logout` to
-revoke that temporary download session. Never put secrets in URLs or source.
-See `server/README.md`. The app's subsequent sign-in creates its own session.
-
 If both phones change one grouping offline, neither overwrites the other.
 **Shared library → Review edit conflicts** lets you select the version to keep.
 Different new groupings merge automatically. Pictures of the same physical end
@@ -53,25 +64,29 @@ is a physical measurement-accuracy guarantee.
 
 ## Build and share updates
 
-Use a **private** GitHub repository for this beta. The exported source contains
+This public repository and its downloads contain
 no personal photos, annotations, accounts, invitations, database, dependency
 cache or signing key. Manufacturer target artwork is omitted; geometric ring
 previews remain, and animal/game faces display an unavailable-artwork notice.
-Model weights and their notices are included for noncommercial testing;
-see `THIRD_PARTY.md` and `assets/licenses/` before any public/commercial release.
+Model weights and their attribution/terms are included for noncommercial
+experimentation; see `THIRD_PARTY.md` and `assets/licenses/` before reuse.
 Do not claim the full app/data/models have one blanket open-source license.
 
-The workflow uses manually triggered GitHub Actions and stores the APK as a
-build artifact. It does **not** publish a release or change your server.
-Add these repository Actions secrets:
+Pushing a version tag matching the manifest (for example `v0.20.0`) runs tests,
+builds the same-signed APK and publishes it with `SHA256SUMS.txt` as the latest
+GitHub release. The download link above stays the same across versions. Manual
+workflow runs produce a test artifact without publishing a release. Neither
+path changes the sync server or its accounts. Signing uses these encrypted
+repository Actions secrets:
 
 - `REDWOOD_KEYSTORE_BASE64`: base64 of the existing private signing keystore.
 - `REDWOOD_STORE_PASSWORD`, `REDWOOD_KEY_PASSWORD`, `REDWOOD_KEY_ALIAS`.
 
 Use the **same signing key** for every update. A different key cannot upgrade
 an installed app. Never put a key/password in the repository or upload it as an
-artifact. After building, create a private GitHub release and attach its APK so
-Iris can download it with access to that repository.
+artifact. The workflow refuses a different signing identity or mismatched
+version tag. Increase `versionCode` for each future update and preserve the
+package/auth identifiers above. No per-release account setup or email is needed.
 
 Local build requires JDK 21+, Python 3, Android SDK platform 34, build-tools
 36.1.0 and zip. Set `ANDROID_HOME`, `JAVA_HOME`, `REDWOOD_KEYSTORE`,

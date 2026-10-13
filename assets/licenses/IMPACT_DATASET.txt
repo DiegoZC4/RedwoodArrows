@@ -15,10 +15,20 @@ private assistant-reviewed photographs, synthetic arrow masks, and a pretrained
 torchvision MobileNetV3-Small backbone. Training adds a new entry-center decoder.
 Dataset photographs and private annotations are NOT included in the APK.
 
-This is a personal, noncommercial experimental build, not a public or commercial
-model release. Account for the dataset's attribution, noncommercial and
-share-alike terms, as well as upstream pretrained-weight data terms, before
-redistribution. See TORCHVISION.txt for the reused backbone-code notice.
+This is a noncommercial experimental model release. The project-specific
+entry-model adaptation is distributed under CC BY-NC-SA 4.0, retaining the
+dataset's attribution, noncommercial and share-alike terms:
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+No endorsement by the dataset author is implied. Changes include the new
+decoder, fine-tuning and a two-model ensemble; hashes and evaluation details
+are in impact/model-card.json. No training photographs or annotations are
+distributed. This notice does not grant rights beyond the upstream terms.
+
+The backbone was adapted from torchvision's ImageNet-pretrained
+MobileNetV3-Small. Its code notice is in TORCHVISION.txt. Pretrained weights
+can have training-data terms separate from the code license; review these
+before other uses, especially commercial redistribution:
+https://docs.pytorch.org/vision/stable/models.html#general-information-on-pre-trained-weights
 
 No claim of certified physical accuracy or complete detection of occluded
 arrows is made. Multi-view agreement is not an independent accuracy guarantee.

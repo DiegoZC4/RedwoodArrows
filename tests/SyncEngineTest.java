@@ -40,6 +40,8 @@ public final class SyncEngineTest {
             check(Store.csv(read(b,id)).equals(original),"Exact arrow positions and shooter survive round trip");
             check(Arrays.equals(Files.readAllBytes(new File(b.directory(read(b,id)),photo).toPath()),jpeg),"Image bytes survive round trip");
             check(read(b,id).shooter.id.equals("archer-alex"),"Photographer login never changes shooter");
+            Store.Group aimed=read(a,id);aimed.views.get(0).calibration.source="chosen target · reference image-up fixture";aimed.views.get(0).calibration.h[2]-=.2;a.save(aimed);engine(a,ra).run();engine(b,rb).run();
+            check(read(b,id).views.get(0).calibration.source.equals(aimed.views.get(0).calibration.source)&&Arrays.equals(read(b,id).views.get(0).calibration.h,aimed.views.get(0).calibration.h),"Chosen physical target and corrected plane sync exactly");
             engine(a,ra).run();engine(b,rb).run();check(b.list().size()==1,"Repeated sync never duplicates groupings");
             Store.Group edited=read(b,id);edited.name="Sam corrected the end";edited.shooter=new ShooterRoster.Person("archer-sam","Sam");b.save(edited);engine(b,rb).run();engine(a,ra).run();
             check(read(a,id).name.equals(edited.name)&&read(a,id).shooter.id.equals("archer-sam"),"Member corrections sync back to owner");

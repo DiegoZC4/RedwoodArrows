@@ -18,13 +18,14 @@ Source and license: https://github.com/stleary/JSON-java/tree/20240303 . This
 78,332-byte JAR is not an Android runtime dependency and is not bundled in the
 APK. The installed app uses Android's built-in `org.json` implementation.
 
-The visual target gallery includes **Maple Leaf Press's proprietary catalog
+The private development target gallery includes **Maple Leaf Press's proprietary catalog
 thumbnails**, not open-source artwork. These small images identify presets in
 this personal build; they are not print-ready target sheets and are not used as
 measurement/scoring templates. `assets/target-previews/manifest.json` records
 the original URLs, hashes and two PDF-image extractions. The maker retains its
-artwork/trademark rights; no general redistribution license is asserted. Review
-permission before publishing the app. The notice is bundled at
+artwork/trademark rights; no general redistribution license is asserted. These
+bitmaps are omitted from the public source export and GitHub-built APK, which
+use geometric previews and unavailable-artwork notices instead. The notice is bundled at
 `assets/licenses/MAPLE_LEAF_PREVIEWS.txt`.
 
 The new entry-center pipeline additionally uses Haozhe Ma's **Archery target
@@ -33,8 +34,10 @@ The publisher identifies the dataset license as **CC BY-NC-SA 4.0**:
 https://www.kaggle.com/datasets/haozhema/archery-target-fita-60cm . Attribution
 and the archive checksum are retained in `assets/licenses/IMPACT_DATASET.txt`.
 The public corpus is training-only; no public-dataset image is presented as an
-independent evaluation example. This personal experimental build is not a
-public/commercial model release. No training photographs are bundled.
+independent evaluation example. The project-specific entry-model adaptation
+is shared under CC BY-NC-SA 4.0 for noncommercial experimentation, as described
+in the bundled attribution notice. No training photographs are bundled. This
+does not assert one blanket open-source license for the app and all its models.
 
 The new decoder predicts entry centers directly, with the existing OpenCV DNN
 runtime. SIFT/RANSAC supplies paper-plane registration; ARCore's already-used

@@ -21,7 +21,7 @@ final class QuickCapture {
             ShooterPager choose=new ShooterPager(a,a.shooters.roster.all(),a.shooters.active(),false,"Next grouping",person->a.shooters.selectActive(person.id));choose.setTag("quick-shooter");owner.addView(choose,new LinearLayout.LayoutParams(-1,a.dp(48)));
         }
         LinearLayout.LayoutParams op=new LinearLayout.LayoutParams(a.dp(116),-2);op.setMargins(a.dp(8),0,0,0);context.addView(owner,op);a.add(a.root,context);
-        Button distance=a.button(PracticeUi.nextLabel(a)+" · next end",()->PracticeUi.nextDialog(a));distance.setTag("quick-distance");distance.setTextSize(12);distance.setContentDescription("Next grouping distance: "+PracticeUi.nextLabel(a)+". Change distance and equipment setup.");a.add(a.root,distance);
+        View distance=PracticeUi.inline(a,null,"Next grouping",null);distance.setTag("quick-distance");a.add(a.root,distance);
         LinearLayout actions=a.row();Button scan=a.button("Scan next",a::quickCapture);scan.setTag("quick-scan");scan.setBackground(a.rounded(MainActivity.ACCENT));scan.setTextColor(MainActivity.BG);actions.addView(scan,new LinearLayout.LayoutParams(0,a.dp(48),1));
         Button setup=a.button("Options",a::captureSetup);setup.setTag("new-grouping");setup.setContentDescription("New grouping options: import photos or change setup");LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(a.dp(88),a.dp(48));sp.setMargins(a.dp(8),0,0,0);actions.addView(setup,sp);a.add(a.root,actions);
     }

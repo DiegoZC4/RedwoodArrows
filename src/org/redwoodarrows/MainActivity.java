@@ -26,7 +26,7 @@ public final class MainActivity extends Activity {
     Store.ShooterEdit shooterUndo;
     ProgressUi progress;boolean returnToProgress;
     TextView syncStatus;long syncRefreshAt;
-    GroupImages groupImages;GroupImageViewer imageViewer;
+    GroupImages groupImages;GroupImageViewer imageViewer;TargetPicker targetPicker;
     GroupingGallery groupingGallery;android.os.Parcelable groupGridState;String groupGridFilter="";boolean catalogForCapture;
     LinearLayout root,controls;TextView heading,hint,detail;Button phaseButton;PhotoCanvas canvas;Bitmap bitmap;SweepView sweep;
     final ExecutorService worker=Executors.newSingleThreadExecutor();final ArrayDeque<String> undo=new ArrayDeque<>();boolean busy=false;String page="home";long lastCameraError;
@@ -37,7 +37,7 @@ public final class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);if(debugQaAllowed()&&intent.getBooleanExtra("qa",false))runQa();}
     @Override protected void onPause(){super.onPause();if(sweep!=null){closeCamera();analysis=null;if(group!=null&&!group.views.isEmpty())editor();else home();}}
     @Override protected void onResume(){super.onResume();SyncRuntime.uiChanged=()->runOnUiThread(this::refreshSync);if(new SyncSession(this).present()){SyncJobs.schedule(this);if(System.currentTimeMillis()-syncRefreshAt>60000){syncRefreshAt=System.currentTimeMillis();SyncRuntime.request(this,null);}}}
-    @Override protected void onDestroy(){SyncRuntime.uiChanged=null;Store.editingGroupId=null;if(imageViewer!=null)imageViewer.dismiss();closeCamera();worker.shutdown();super.onDestroy();}
+    @Override protected void onDestroy(){SyncRuntime.uiChanged=null;Store.editingGroupId=null;if(imageViewer!=null)imageViewer.dismiss();if(targetPicker!=null)targetPicker.closeWithActivity();closeCamera();worker.shutdown();super.onDestroy();}
     void refreshSync(){if(isDestroyed())return;if(syncStatus!=null){syncStatus.setText(SyncRuntime.status+"  ·  ☁");syncStatus.setContentDescription("Shared library. "+SyncRuntime.status+". Tap to manage sign-in and sync.");}if(!SyncRuntime.running&&page.equals("home")){shooters=new ShootersUi(this);groupImages.thumbs.evictAll();rememberGroups();home();}}
     int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
     TextView text(String s,float size,int color){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setPadding(0,dp(5),0,dp(5));return t;}
@@ -62,7 +62,9 @@ public final class MainActivity extends Activity {
     void undoShooter(){if(busy||shooterUndo==null)return;try{Store.Group restored=store.undoShooterEdit(shooterUndo);if(group!=null&&group.id.equals(restored.id)){group=restored;undo.clear();analysis=null;}rememberGroups();shooterUndo=null;home();}catch(Exception e){message(e.getMessage());}}
     void rememberGroups(){if(page.equals("home")&&groupingGallery!=null)groupingGallery.remember();}
     void showGroupImage(Store.Group saved,int kind,int view){if(busy)return;rememberGroups();if(imageViewer!=null)imageViewer.dismiss();imageViewer=new GroupImageViewer(this,saved,kind,view);imageViewer.show();}
-    void homeMenu(){rememberGroups();new AlertDialog.Builder(this).setTitle("Redwood Arrows").setItems(new String[]{"Target presets","People","Storage","Shared library","Help","About"},(d,which)->{if(which==0)showCatalog();else if(which==1)shooters.chooseActive();else if(which==2)storageSettings();else if(which==3)new SyncUi(this).show();else if(which==4)help();else about();}).setNegativeButton("Close",null).show();}
+    void chooseTarget(Store.Group saved,int photo){if(busy||saved.views.isEmpty())return;openGroup(saved);if(group==null||!group.id.equals(saved.id)||!group.id.equals(Store.editingGroupId))return;String id=saved.views.get(Math.max(0,Math.min(photo,saved.views.size()-1))).id;int at=-1;for(int i=0;i<group.views.size();i++)if(group.views.get(i).id.equals(id))at=i;if(at<0){message("Photo changed; reopen the grouping");return;}if(targetPicker!=null)targetPicker.dismiss();targetPicker=new TargetPicker(this,group,at);targetPicker.show();}
+    void homeMenu(){rememberGroups();new AlertDialog.Builder(this).setTitle("Redwood Arrows").setItems(new String[]{"Target presets","People","Storage","Shared library","Help","About","Download app update"},(d,which)->{if(which==0)showCatalog();else if(which==1)shooters.chooseActive();else if(which==2)storageSettings();else if(which==3)new SyncUi(this).show();else if(which==4)help();else if(which==5)about();else openUpdates();}).setNegativeButton("Close",null).show();}
+    void openUpdates(){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/DiegoZC4/RedwoodArrows/releases/latest/download/RedwoodArrows.apk")));Toast.makeText(this,"Install over this app. Do not uninstall; your sign-in stays saved.",Toast.LENGTH_LONG).show();}catch(ActivityNotFoundException e){message("Open github.com/DiegoZC4/RedwoodArrows/releases/latest in your browser to download the update.");}}
     void captureSetup(){rememberGroups();page="capture-setup";canvas=null;shell("New grouping");add(root,button("Back to gallery",this::home));
         ScrollView scroll=new ScrollView(this);LinearLayout body=new LinearLayout(this);body.setOrientation(1);scroll.addView(body);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         shooters.addHomeControls(body);add(body,text("TARGET",12,MUTED));LinearLayout preset=row();preset.setGravity(Gravity.CENTER_VERTICAL);TargetThumbnail thumb=new TargetThumbnail(this,selected);thumb.setOnClickListener(v->showCatalog());preset.addView(thumb,new LinearLayout.LayoutParams(dp(84),dp(88)));Button target=button(selected.name+"\nChange target",this::showCatalog);preset.addView(target,new LinearLayout.LayoutParams(0,-2,1));add(body,preset);
@@ -131,7 +133,7 @@ public final class MainActivity extends Activity {
         hint=text("",13,ACCENT);hint.setMaxLines(3);add(root,hint);
         controls=new LinearLayout(this);controls.setOrientation(1);root.addView(controls);
         LinearLayout modes=row();cell(modes,button(group.preset().circular()?"Rings":"Paper corners",this::manualRings));cell(modes,button("Mark hit",()->setMode("hit")));cell(modes,button("Mark shaft",()->setMode("shaft")));add(controls,modes);
-        LinearLayout tools=row();cell(tools,button("Find rings",this::autoRings));cell(tools,button("Find arrows",this::autoShafts));cell(tools,button("Align view",this::align));add(controls,tools);
+        LinearLayout tools=row();cell(tools,button("Choose target",()->chooseTarget(group,index)));cell(tools,button("Find arrows",this::autoShafts));cell(tools,button("Align view",this::align));add(controls,tools);
         LinearLayout arrows=row();cell(arrows,button("−",()->{arrow=Math.max(1,arrow-1);updateEditor();}));cell(arrows,button("Arrow "+arrow,()->arrowPicker()));cell(arrows,button("+",()->{arrow++;updateEditor();}));cell(arrows,button("Undo",this::undo));add(controls,arrows);
         phaseButton=button("",this::advance);phaseButton.setBackground(rounded(ACCENT));phaseButton.setTextColor(BG);add(controls,phaseButton);
         detail=text("",11,MUTED);detail.setMaxLines(2);add(root,detail);updateEditor();

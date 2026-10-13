@@ -16,11 +16,13 @@ final class GroupDetails {
         a.heading.setTag("group-shooter");a.heading.setContentDescription("Shooter: "+a.shooters.label(group)+". Change shooter");a.heading.setOnClickListener(v->{if(!a.busy)a.shooters.chooseForGroup();});
         LinearLayout header=a.row();header.setGravity(Gravity.CENTER_VERTICAL);a.root.removeView(a.heading);
         header.addView(a.button(a.returnToProgress?"Progress":"Gallery",a::backFromGroup),new LinearLayout.LayoutParams(a.dp(80),a.dp(44)));
-        a.heading.setTextSize(23);a.heading.setPadding(a.dp(12),0,a.dp(8),0);a.heading.setSingleLine(true);a.heading.setEllipsize(android.text.TextUtils.TruncateAt.END);header.addView(a.heading,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        a.heading.setTextSize(23);a.heading.setPadding(a.dp(12),0,a.dp(8),0);a.heading.setSingleLine(true);a.heading.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        LinearLayout identity=new LinearLayout(a);identity.setOrientation(1);identity.addView(a.heading,new LinearLayout.LayoutParams(-1,Math.max(a.dp(40),Math.round(23*a.getResources().getDisplayMetrics().scaledDensity)+a.dp(14))));
+        View distance=PracticeUi.inline(a,group,summary.caption(),null);distance.setTag("group-distance");LinearLayout.LayoutParams dp=new LinearLayout.LayoutParams(-1,-2);dp.setMargins(a.dp(8),0,a.dp(8),0);identity.addView(distance,dp);header.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
         Button more=a.button("More",this::menu);more.setTag("group-more");header.addView(more,new LinearLayout.LayoutParams(a.dp(60),a.dp(44)));a.add(a.root,header);
         ScrollView scroll=new ScrollView(a);LinearLayout body=new LinearLayout(a);body.setOrientation(1);scroll.addView(body);a.root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         TextView title=a.text(summary.caption()+" · "+summary.date(),13,MainActivity.MUTED);title.setMaxLines(2);a.add(body,title);
-        Button context=a.button((group.practice.arrowMeters.isEmpty()?group.practice.label():"Walk-up distances")+" · "+(group.practice.isChecked(group)?"checked":"Check counts"),()->PracticeUi.groupDialog(a,group));context.setTag("group-practice");a.add(body,context);
+        Button context=a.button((group.practice.isChecked(group)?"Shots checked":"Shot count & setup")+(group.practice.arrowMeters.isEmpty()?"":" · walk-up"),()->PracticeUi.groupDialog(a,group));context.setTag("group-practice");a.add(body,context);
         TargetCanvas target=new TargetCanvas(a,group);target.setTag("group-detail-plot");body.addView(target,new LinearLayout.LayoutParams(-1,a.dp(294)));
         TextView coordinate=a.text(summary.located>0?"Tap a dot for coordinates":"No positions yet",13,MainActivity.MUTED);coordinate.setGravity(Gravity.CENTER);coordinate.setTag("selected-coordinate");
         target.setArrowListener(id->{for(Store.Result r:summary.results)if(r.id==id)coordinate.setText(String.format(Locale.US,"#%d    x %+.1f    y %+.1f mm",r.id,r.x,r.y));});a.add(body,coordinate);
@@ -29,6 +31,7 @@ final class GroupDetails {
         if(summary.photos>0){HorizontalScrollView strip=new HorizontalScrollView(a);strip.setHorizontalScrollBarEnabled(false);strip.setTag("group-photo-strip");LinearLayout photos=a.row();
             for(int i=0;i<group.views.size();i++){final int at=i;PhotoThumb thumbnail=new PhotoThumb(a,new File(a.store.directory(group),group.views.get(i).file));thumbnail.setTag("group-photo:"+i);thumbnail.setContentDescription("Photo "+(i+1)+" of "+group.views.size()+". Open full screen");thumbnail.setOnClickListener(v->a.showGroupImage(group,GroupImages.ORIGINAL,at));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(a.dp(72),a.dp(86));p.setMargins(0,0,a.dp(8),0);photos.addView(thumbnail,p);}
             strip.addView(photos);a.add(body,strip);
+            Button choose=a.button("Choose target in photo",()->a.chooseTarget(group,0));choose.setTag("group-choose-target");a.add(body,choose);
         }
         if(!group.keepPhotos&&!group.coordinatesOnly()&&!group.views.isEmpty()){Button finish=a.button("Save 2D grouping",a::confirmCoordinates);finish.setTag("save-coordinates");finish.setBackground(a.rounded(MainActivity.ACCENT));finish.setTextColor(MainActivity.BG);a.add(body,finish);}
     }

@@ -41,15 +41,15 @@ final class GroupingGallery {
     void column(LinearLayout row,View view,int height){LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,height,1);p.setMargins(a.dp(2),0,a.dp(2),0);row.addView(view,p);}
     View card(Store.Group group){
         GroupPresentation s=summaries.get(group.id);LinearLayout row=a.row();row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(a.dp(3),a.dp(5),a.dp(3),a.dp(5));row.setBackground(a.rounded(MainActivity.PANEL));row.setTag("saved-group:"+group.id);
-        int height=a.dp(120)+Math.round(Math.max(0,a.getResources().getConfiguration().fontScale-1)*a.dp(78)),reference=GroupImages.reference(group);
+        int height=a.dp(164)+Math.round(Math.max(0,a.getResources().getConfiguration().fontScale-1)*a.dp(100)),reference=GroupImages.reference(group);
         TargetCanvas plot=new TargetCanvas(a,group).thumbnail();plot.setTag("group-plot:"+group.id);plot.setContentDescription(s.caption()+". 2D grouping. Open full screen");plot.setOnClickListener(v->a.showGroupImage(group,GroupImages.PLOT,reference));column(row,plot,height);
         GroupImages.Preview warped=a.groupImages.new Preview(group,reference,GroupImages.WARPED);warped.setTag("group-warp:"+group.id);warped.setOnClickListener(v->a.showGroupImage(group,GroupImages.WARPED,reference));column(row,warped,height);
         GroupImages.Preview original=a.groupImages.new Preview(group,reference,GroupImages.ORIGINAL);original.setTag("group-raw:"+group.id);original.setOnClickListener(v->a.showGroupImage(group,GroupImages.ORIGINAL,reference));column(row,original,height);
         LinearLayout owner=new LinearLayout(a);owner.setOrientation(1);owner.setGravity(Gravity.CENTER_VERTICAL);owner.setTag("group-owner:"+group.id);
         ShooterPager name=new ShooterPager(a,a.shooters.roster.all(),group.shooter,s.provisionalOwner(),s.caption(),person->assign(group,person));name.setTag("group-shooter-pager:"+group.id);owner.addView(name,new LinearLayout.LayoutParams(-1,-2));
+        View distance=PracticeUi.inline(a,group,s.caption(),()->{try{a.shooterUndo=a.store.lastShooterEdit();}catch(Exception ignored){a.shooterUndo=null;}updateHeading();});distance.setTag("group-distance:"+group.id);LinearLayout.LayoutParams dp=new LinearLayout.LayoutParams(-1,-2);dp.setMargins(0,a.dp(4),0,0);owner.addView(distance,dp);
         LinearLayout info=new LinearLayout(a);info.setOrientation(1);info.setGravity(Gravity.CENTER_VERTICAL);info.setTag("group-details:"+group.id);info.setFocusable(true);info.setClickable(true);info.setOnClickListener(v->{remember();a.openGroup(group);});info.setContentDescription(s.caption()+". "+s.count()+". Open grouping details.");
         info.addView(line(s.caption(),11,MainActivity.MUTED));info.addView(line(new java.text.SimpleDateFormat("MMM d",Locale.US).format(new Date(group.created)),10,MainActivity.MUTED));info.addView(line(s.count(),10,MainActivity.FG));if(s.photos>1)info.addView(line(s.photos+" photos",10,MainActivity.MUTED));for(int i=0;i<info.getChildCount();i++)info.getChildAt(i).setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);owner.addView(info,new LinearLayout.LayoutParams(-1,0,1));
-        if(Practice.distance(group.practice.meters))info.addView(line(group.practice.label(),10,MainActivity.MUTED));
         column(row,owner,height);return row;
     }
     private boolean assign(Store.Group group,ShooterRoster.Person person){

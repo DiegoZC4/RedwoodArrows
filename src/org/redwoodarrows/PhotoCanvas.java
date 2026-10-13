@@ -33,7 +33,8 @@ public final class PhotoCanvas extends View {
     @Override public boolean onTouchEvent(MotionEvent e){if(bitmap==null)return false;pinch.onTouchEvent(e);float x=e.getX(),y=e.getY();
         if(e.getActionMasked()==MotionEvent.ACTION_DOWN){downX=lastX=x;downY=lastY=y;moved=multi=movingMark=false;dragged=null;double best=24*getResources().getDisplayMetrics().density;
             List<double[]> candidates=new ArrayList<>();if(mode.equals("outer")||mode.equals("corners"))candidates.addAll(outer);else if(mode.equals("inner"))candidates.addAll(inner);else for(Store.Observation o:frame.observations){candidates.add(o.a);if(o.line)candidates.add(o.b);}
-            if(!readOnly)for(double[] q:candidates){double d=distance(q,x,y);if(d<best){best=d;dragged=q;}}return true;}
+            if(!readOnly&&!mode.equals("target"))for(double[] q:candidates){double d=distance(q,x,y);if(d<best){best=d;dragged=q;}}return true;}
+        if(e.getActionMasked()==MotionEvent.ACTION_CANCEL){multi=true;dragged=null;movingMark=false;return true;}
         if(e.getPointerCount()>1){multi=true;dragged=null;if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&!pinch.isInProgress()){float mx=(e.getX(0)+e.getX(1))/2,my=(e.getY(0)+e.getY(1))/2;panX+=mx-lastX;panY+=my-lastY;lastX=mx;lastY=my;invalidate();}else{lastX=(e.getX(0)+e.getX(1))/2;lastY=(e.getY(0)+e.getY(1))/2;}return true;}
         if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&!multi){if(Math.hypot(x-downX,y-downY)>7*getResources().getDisplayMetrics().density)moved=true;
             if(moved&&dragged!=null){if(!movingMark){listener.beforeMove();movingMark=true;for(Store.Observation o:frame.observations)if(o.a==dragged||o.b==dragged){o.source="manual correction";o.confidence=Double.NaN;o.associationWarning="";}}double[] q=image(x,y);dragged[0]=Math.max(0,Math.min(bitmap.getWidth()-1,q[0]));dragged[1]=Math.max(0,Math.min(bitmap.getHeight()-1,q[1]));}

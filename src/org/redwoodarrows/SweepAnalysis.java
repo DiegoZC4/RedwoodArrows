@@ -58,6 +58,7 @@ public final class SweepAnalysis {
                 Bitmap image=store.bitmap(copy,v);String problem="";
                 try{
                     if(image==null)throw new IllegalArgumentException("Photo is missing");
+                    if(ref==null&&TargetSelection.locked(source)&&!v.id.equals(source.views.get(0).id))throw new IllegalArgumentException("The chosen reference target could not be analyzed; choose a clearer reference photo. A different target was not substituted.");
                     if(ref==null){
                         if(v.calibration==null){
                             if(!copy.preset().family.equals("Field"))throw new IllegalArgumentException("This preset needs a first-photo ring or paper-corner calibration. Use Review now to set it once.");

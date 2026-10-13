@@ -13,6 +13,28 @@ final class PracticeUi {
     static String nextLabel(MainActivity a){try{return next(a).label();}catch(Exception e){return "Check distance setting";}}
     static void nextDialog(MainActivity a){try{show(a,null,next(a),()->{if(a.page.equals("capture-setup"))a.captureSetup();else a.home();});}catch(Exception e){a.message("Saved range settings could not be read; they have been preserved. "+e.getMessage());}}
     static void groupDialog(MainActivity a,Store.Group g){show(a,g,g.practice,()->a.results());}
+    static View inline(MainActivity a,Store.Group g,String caption,Runnable saved){
+        try{
+            Practice source=g==null?next(a):g.practice;final DistanceControl[] control=new DistanceControl[1];
+            control[0]=new DistanceControl(a,source.meters,source.unit,!source.arrowMeters.isEmpty(),caption,(meters,unit)->{
+                if(a.busy)return false;
+                try{
+                    Practice p=g==null?next(a):Practice.from(g.practice.json());p.meters=meters;p.unit=unit;
+                    if(g==null){if(!a.getPreferences(0).edit().putString("practice_next",p.json().toString()).commit())throw new IllegalStateException("Could not save next distance");}
+                    else{Store.Group changed=a.store.updatePractice(g,p);g.practice=changed.practice;g.diskDigest=changed.diskDigest;if(a.group!=null&&a.group.id.equals(g.id)){a.group=g;a.undo.clear();a.analysis=null;}}
+                    if(saved!=null)saved.run();return true;
+                }catch(Exception e){a.message("Could not save distance: "+e.getMessage());return false;}
+            },()->distanceDialog(a,control[0]));return control[0];
+        }catch(Exception e){Button error=a.button("Check distance",()->a.message("Saved distance could not be read; it has been preserved. "+e.getMessage()));return error;}
+    }
+    /** Optional single-step exact entry; everyday changes need no dialog. */
+    static AlertDialog distanceDialog(MainActivity a,DistanceControl control){
+        LinearLayout body=new LinearLayout(a);body.setOrientation(1);body.setPadding(a.dp(20),a.dp(8),a.dp(20),a.dp(8));body.setBackgroundColor(MainActivity.BG);
+        String[] unit={control.unit()};EditText value=field(a,body,"Exact distance · blank = unknown",Practice.distance(control.meters())?number(Practice.fromMeters(control.meters(),unit[0])):"","inline-distance-value",true);
+        TwoShooterSwitch units=new TwoShooterSwitch(a,"Yards","Meters",unit[0].equals("yd")?0:1,"Distance units",choice->{try{double meters=parseDistance(value,unit[0]);unit[0]=choice==0?"yd":"m";if(Practice.distance(meters))value.setText(number(Practice.fromMeters(meters,unit[0])));return true;}catch(Exception e){value.setError("Fix the distance before switching units");return false;}});units.setTag("inline-distance-units");a.add(body,units);
+        AlertDialog dialog=new AlertDialog.Builder(a).setTitle("Distance").setView(body).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{if(control.commit(parseDistance(value,unit[0]),unit[0]))dialog.dismiss();}catch(Exception e){value.setError("Enter a positive distance up to 1,000 meters, or leave blank");}}));dialog.show();value.selectAll();value.requestFocus();dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);return dialog;
+    }
     static String number(double n){return String.format(Locale.US,"%.6f",n).replaceAll("0+$","").replaceAll("\\.$","");}
     static double parseDistance(EditText input,String unit){String value=input.getText().toString().trim();if(value.isEmpty())return Double.NaN;double meters=Practice.toMeters(Double.parseDouble(value),unit);if(!Practice.distance(meters))throw new IllegalArgumentException("Enter a positive distance up to 1,000 meters, or leave it blank");return meters;}
     static int count(EditText input){String s=input.getText().toString().trim();return s.isEmpty()?-1:Integer.parseInt(s);}
