@@ -20,6 +20,9 @@ public final class SyncRuntime extends Application {
         if(new SyncSession(c).present()){status="Saved · waiting to sync";SyncJobs.schedule(c);}
     }
     static void notifyUi(){Runnable listener=uiChanged;if(listener!=null)listener.run();}
+    /** Photos are already durable. Online intake can sync now, with the persisted
+     * network-constrained job remaining as the offline/restart fallback. */
+    static void saved(Context context){Context c=context.getApplicationContext();if(!new SyncSession(c).present())return;SyncJobs.schedule(c);try{android.net.ConnectivityManager cm=(android.net.ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE);android.net.NetworkCapabilities caps=cm.getNetworkCapabilities(cm.getActiveNetwork());if(caps!=null&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))request(c,null);}catch(Exception ignored){/* The persisted job retries without blocking a local save. */}}
     static SyncEngine engine(Context c,JSONObject session)throws Exception {return new SyncEngine(new Store(c),directory(c),new SyncHttp(session.getString("token")));}
     static synchronized Future<?> request(Context context,Runnable done){
         Context c=context.getApplicationContext();

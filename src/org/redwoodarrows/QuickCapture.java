@@ -22,7 +22,9 @@ final class QuickCapture {
         }
         LinearLayout.LayoutParams op=new LinearLayout.LayoutParams(a.dp(116),-2);op.setMargins(a.dp(8),0,0,0);context.addView(owner,op);a.add(a.root,context);
         View distance=PracticeUi.inline(a,null,"Next grouping",null);distance.setTag("quick-distance");a.add(a.root,distance);
-        LinearLayout actions=a.row();Button scan=a.button("Scan next",a::quickCapture);scan.setTag("quick-scan");scan.setBackground(a.rounded(MainActivity.ACCENT));scan.setTextColor(MainActivity.BG);actions.addView(scan,new LinearLayout.LayoutParams(0,a.dp(48),1));
-        Button setup=a.button("Options",a::captureSetup);setup.setTag("new-grouping");setup.setContentDescription("New grouping options: import photos or change setup");LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(a.dp(88),a.dp(48));sp.setMargins(a.dp(8),0,0,0);actions.addView(setup,sp);a.add(a.root,actions);
+        LinearLayout actions=a.row();Button photo=a.button("Take photo",()->a.takePhoto(false));photo.setTag("quick-photo");photo.setContentDescription("Take a photo of a new grouping. Save on this phone and sync automatically when connected.");photo.setBackground(a.rounded(MainActivity.ACCENT));photo.setTextColor(MainActivity.BG);
+        Button add=a.button("Add photos",()->a.addPhotos(false));add.setTag("quick-import");add.setContentDescription("Add camera-roll photos of one grouping. Originals stay untouched.");
+        Button scan=a.button("Sweep",a::quickCapture);scan.setTag("quick-scan");scan.setContentDescription("Automatic moving-phone sweep with arrow analysis");
+        for(Button button:new Button[]{photo,add,scan}){button.setTextSize(13);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,a.dp(48),1);p.setMargins(a.dp(2),0,a.dp(2),0);actions.addView(button,p);}a.add(a.root,actions);
     }
 }

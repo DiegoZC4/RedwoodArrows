@@ -22,9 +22,12 @@ final class GroupDetails {
         Button more=a.button("More",this::menu);more.setTag("group-more");header.addView(more,new LinearLayout.LayoutParams(a.dp(60),a.dp(44)));a.add(a.root,header);
         ScrollView scroll=new ScrollView(a);LinearLayout body=new LinearLayout(a);body.setOrientation(1);scroll.addView(body);a.root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         TextView title=a.text(summary.caption()+" · "+summary.date(),13,MainActivity.MUTED);title.setMaxLines(2);a.add(body,title);
+        if(!group.coordinatesOnly()&&group.keepPhotos){LinearLayout intake=a.row();Button camera=a.button("Take photo",()->a.takePhoto(true));camera.setTag("group-take-photo");camera.setContentDescription("Take another photo of this same unchanged grouping");Button photos=a.button("Add photos",()->a.addPhotos(true));photos.setTag("group-add-photos");photos.setContentDescription("Add camera-roll views to this same unchanged grouping");a.cell(intake,camera);a.cell(intake,photos);a.add(body,intake);}
         Button context=a.button((group.practice.isChecked(group)?"Shots checked":"Shot count & setup")+(group.practice.arrowMeters.isEmpty()?"":" · walk-up"),()->PracticeUi.groupDialog(a,group));context.setTag("group-practice");a.add(body,context);
-        TargetCanvas target=new TargetCanvas(a,group);target.setTag("group-detail-plot");body.addView(target,new LinearLayout.LayoutParams(-1,a.dp(294)));
-        TextView coordinate=a.text(summary.located>0?"Tap a dot for coordinates":"No positions yet",13,MainActivity.MUTED);coordinate.setGravity(Gravity.CENTER);coordinate.setTag("selected-coordinate");
+        TargetCanvas target=new TargetCanvas(a,group);target.setTag("group-detail-plot");
+        if(summary.located==0&&summary.photos>0){GroupImages.Preview photo=a.groupImages.new Preview(group,0,GroupImages.ORIGINAL);photo.setTag("group-detail-photo");photo.setOnClickListener(v->a.showGroupImage(group,GroupImages.ORIGINAL,0));body.addView(photo,new LinearLayout.LayoutParams(-1,a.dp(294)));}
+        else body.addView(target,new LinearLayout.LayoutParams(-1,a.dp(294)));
+        TextView coordinate=a.text(summary.located>0?"Tap a dot for coordinates":summary.photos>0?"Photo saved · arrow analysis is optional":"No positions yet",13,MainActivity.MUTED);coordinate.setGravity(Gravity.CENTER);coordinate.setTag("selected-coordinate");
         target.setArrowListener(id->{for(Store.Result r:summary.results)if(r.id==id)coordinate.setText(String.format(Locale.US,"#%d    x %+.1f    y %+.1f mm",r.id,r.x,r.y));});a.add(body,coordinate);
         LinearLayout stats=a.row();int total=Math.max(summary.results.size(),group.practice.fired);stat(stats,summary.located+(total>summary.located?" / "+total:""),"located");stat(stats,summary.located>1?String.format(Locale.US,"%.0f",summary.spread):"—","spread · mm");stat(stats,""+(group.coordinatesOnly()?group.sourceViewCount:summary.photos),"views");a.add(body,stats);
         Button details=a.button(summary.status()+" · Details",this::details);details.setTag("group-details");details.setTextSize(12);details.setTextColor(MainActivity.MUTED);a.add(body,details);
@@ -32,6 +35,7 @@ final class GroupDetails {
             for(int i=0;i<group.views.size();i++){final int at=i;PhotoThumb thumbnail=new PhotoThumb(a,new File(a.store.directory(group),group.views.get(i).file));thumbnail.setTag("group-photo:"+i);thumbnail.setContentDescription("Photo "+(i+1)+" of "+group.views.size()+". Open full screen");thumbnail.setOnClickListener(v->a.showGroupImage(group,GroupImages.ORIGINAL,at));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(a.dp(72),a.dp(86));p.setMargins(0,0,a.dp(8),0);photos.addView(thumbnail,p);}
             strip.addView(photos);a.add(body,strip);
             Button choose=a.button("Choose target in photo",()->a.chooseTarget(group,0));choose.setTag("group-choose-target");a.add(body,choose);
+            Button analyze=a.button("Find arrows",a::analyzeSweep);analyze.setTag("group-find-arrows");a.add(body,analyze);
         }
         if(!group.keepPhotos&&!group.coordinatesOnly()&&!group.views.isEmpty()){Button finish=a.button("Save 2D grouping",a::confirmCoordinates);finish.setTag("save-coordinates");finish.setBackground(a.rounded(MainActivity.ACCENT));finish.setTextColor(MainActivity.BG);a.add(body,finish);}
     }

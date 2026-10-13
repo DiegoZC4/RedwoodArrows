@@ -19,7 +19,7 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public final class SweepView extends android.widget.FrameLayout implements GLSurfaceView.Renderer {
     public interface Listener {void captured(Store.Group snapshot);void finished();void error(String message);}
-    private final Activity activity;private final Store store;private final Store.Group group;private final Listener listener;
+    private final Activity activity;private final Store store;private final Store.Group group;private final Listener listener;private final boolean photoOnly;
     private final GLSurfaceView gl;private final TextView status;private final Button capture,done,auto,lightButton;
     final SweepLight light;
     private final BackgroundRenderer background=new BackgroundRenderer();private final AtomicBoolean requested=new AtomicBoolean(false);
@@ -32,7 +32,10 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
     private volatile SweepReadiness.Assessment assessment=SweepReadiness.starting();
     private final SweepPolicy keyframes=new SweepPolicy();
     public SweepView(Activity activity,Store store,Store.Group group,Listener listener)throws Exception {
-        super(activity);this.activity=activity;this.store=store;this.group=group;this.listener=listener;
+        this(activity,store,group,false,listener);
+    }
+    public SweepView(Activity activity,Store store,Store.Group group,boolean photoOnly,Listener listener)throws Exception {
+        super(activity);this.activity=activity;this.store=store;this.group=group;this.listener=listener;this.photoOnly=photoOnly;automatic=!photoOnly;
         if(ArCoreApk.getInstance().requestInstall(activity,true)==ArCoreApk.InstallStatus.INSTALL_REQUESTED)throw new IllegalStateException("Finish the AR service installation, then open the camera again");
         session=new Session(activity);
         Config config=new Config(session);config.setFocusMode(Config.FocusMode.AUTO);config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
@@ -52,7 +55,8 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
             .setNegativeButton("Cancel",null).show();});
         status=new TextView(activity);status.setTextColor(0xFFF2F6EA);status.setTextSize(16);status.setText("Automatic sweep\nKeep the complete face in view and move slowly sideways. I’ll tell you when there are enough angles.");status.setAccessibilityLiveRegion(android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE);panel.addView(status);
         LinearLayout row=new LinearLayout(activity);capture=new Button(activity);capture.setText("Take photo");capture.setAllCaps(false);auto=new Button(activity);auto.setText("Pause");auto.setAllCaps(false);done=new Button(activity);done.setText("Review now");done.setAllCaps(false);row.addView(capture,new LinearLayout.LayoutParams(0,buttonHeight,1));row.addView(auto,new LinearLayout.LayoutParams(0,buttonHeight,1));row.addView(done,new LinearLayout.LayoutParams(0,buttonHeight,1));panel.addView(row);
-        TextView optional=new TextView(activity);optional.setText("Stops automatically · Review now is optional");optional.setTextColor(0xFFB5C4B7);optional.setTextSize(12);panel.addView(optional);
+        TextView optional=new TextView(activity);optional.setText(photoOnly?"Saved offline · syncs when connected":"Stops automatically · Review now is optional");optional.setTextColor(0xFFB5C4B7);optional.setTextSize(12);panel.addView(optional);
+        capture.setTag("camera-shutter");if(photoOnly){auto.setVisibility(GONE);done.setVisibility(GONE);status.setText("Take a photo of this grouping\nKeep the complete target and arrows in view.");}
         LayoutParams p=new LayoutParams(-1,-2,android.view.Gravity.BOTTOM);addView(panel,p);
         capture.setOnClickListener(v->{if(finishing||finishRequested||analysisPending.get()||count>=SweepPolicy.LIMIT)return;lastCaptureError="";capture.setEnabled(false);requested.set(true);});
         auto.setOnClickListener(v->{if(finishing||finishRequested||count>=SweepPolicy.LIMIT)return;automatic=!automatic;lastCaptureError="";auto.setText(automatic?"Pause":"Resume");});
@@ -96,9 +100,10 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                 if(automatic&&!finishRequested&&tracked&&!analysisPending.get()&&!settled&&keyframes.ready(translation,frame.getTimestamp())){title="Hold steady briefly";advice="Let the phone settle at this angle. I’ll take the photo automatically.";}
                 if(!lightReady&&!finishRequested){title=light.on?"Letting the light settle":"Checking the light";advice="The flashlight turns on automatically if needed. It stays steady while you move.";}
                 String counts=String.format(Locale.US,"%d photos · %d useful angles · %.0f° span",count,a.angles,a.spanDegrees)+(a.arrows>0?" · "+a.stableArrows+" / "+a.arrows+" stable entries":"");
-                final String text=title+"\n"+advice+"\n"+counts,lightText=light.label();activity.runOnUiThread(()->{if(!closed&&!finishing){if(!text.contentEquals(status.getText()))status.setText(text);if(!lightText.contentEquals(lightButton.getText()))lightButton.setText(lightText);}});}
+                final String text=photoOnly?(lastCaptureError.isEmpty()?(analysisPending.get()?"Saving photo…":!lightReady?"Checking the light…":"Take a photo of this grouping\nKeep the complete target and arrows in view."):lastCaptureError):title+"\n"+advice+"\n"+counts,lightText=light.label();activity.runOnUiThread(()->{if(!closed&&!finishing){if(!text.contentEquals(status.getText()))status.setText(text);if(!lightText.contentEquals(lightButton.getText()))lightButton.setText(lightText);}});}
             boolean autoFrame=automatic&&!finishing&&!finishRequested&&lightReady&&tracked&&settled&&count<SweepPolicy.LIMIT&&keyframes.ready(translation,frame.getTimestamp());
-            if(!finishing&&!finishRequested&&!analysisPending.get()&&(requested.getAndSet(false)||autoFrame)&&analysisPending.compareAndSet(false,true)){
+            if(!finishing&&!finishRequested&&!analysisPending.get()&&((requested.get()&&(!photoOnly||lightReady))||autoFrame)&&analysisPending.compareAndSet(false,true)){
+                requested.set(false);
                 // A photo remains useful without VIO. Never attach a stale or
                 // untracked pose; those views must use texture registration.
                 try{if(tracked&&origin==null)origin=session.createAnchor(camera.getPose());}catch(Exception e){analysisPending.set(false);throw e;}
@@ -107,7 +112,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                     // Camera2 timestamp has a different convention on this S21
                     // (observed ~25 ms offset), so it must not be compared here.
                     if(Math.abs(image.getTimestamp()-frame.getTimestamp())>2_000_000L)throw new IllegalStateException("Camera timing mismatch; please capture again");
-                    Store.View view=new Store.View();view.rawWidth=image.getWidth();view.rawHeight=image.getHeight();view.timestamp=frame.getTimestamp();view.session=sessionId;
+                    Store.View view=new Store.View();view.rawWidth=image.getWidth();view.rawHeight=image.getHeight();view.timestamp=frame.getTimestamp();view.capturedAt=System.currentTimeMillis();view.session=sessionId;
                     view.cameraTimestamp=frame.getAndroidCameraTimestamp();
                     CameraIntrinsics intrinsics=camera.getImageIntrinsics();float[] f=intrinsics.getFocalLength(),c=intrinsics.getPrincipalPoint();int[] dims=intrinsics.getImageDimensions();
                     if(dims[0]!=image.getWidth()||dims[1]!=image.getHeight())throw new IllegalStateException("Camera calibration dimensions changed; capture again");

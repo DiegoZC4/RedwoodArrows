@@ -23,6 +23,26 @@ phone first. Optional authenticated sync shares the same private library on
 diegozc.com. Signing in does not assign the photographed end to that account:
 choose the actual shooter separately.
 
+**Take photo** opens the in-app camera with the existing automatic continuous
+flashlight. One shutter tap saves the photo and opens its grouping; no sweep,
+arrow labels or review is required to sync it. **Add photos** opens Android's
+photo picker directly (with a Files fallback), without whole-library access.
+Select up to 12 views of the **same unchanged grouping** at once. For another
+end, start again from the gallery. Within a grouping, the same two buttons append
+more views instead of making another end; adding the identical source file again
+is skipped. Camera-roll originals are never changed. Imported copies are oriented
+correctly, limited to 2048 pixels on their longest edge, and stripped of EXIF
+location metadata; the capture date is retained when available.
+
+Photo intake keeps these photo copies for automatic shared sync, independently
+of the **2D only** preference for new analyzed sweeps. Existing 2D-only groupings
+are not converted or altered. Signed-in phones queue saved photos offline and
+sync when connected, including groupings with no arrow positions yet. **Find
+arrows** in a grouping is optional and separate from sharing. The ordinary
+moving-phone **Sweep** remains available; detailed capture options are under
+**More → New grouping options**. Photos of different physical ends should not be
+selected as one grouping; sync does not infer that they are the same end.
+
 Distance is directly adjustable under each grouping's shooter and in the detail
 header: swipe left/right to increase/decrease, then release to save. Yard steps
 are 1 through 20, then 5. Tap for an exact distance or meters, hold to clear the

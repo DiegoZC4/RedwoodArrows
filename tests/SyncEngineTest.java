@@ -87,6 +87,14 @@ public final class SyncEngineTest {
             check(read(b,counts.id).practice.misses==6&&read(b,counts.id).views.isEmpty(),"Counts-only ends sync with no images");
             Store.Group compact=make(a,"2D-only end");compact.keepPhotos=false;a.save(compact);compact=a.finishCoordinates(compact);engine(a,ra).run();engine(b,rb).run();
             check(read(b,compact.id).coordinatesOnly()&&Store.results(read(b,compact.id)).size()==2,"Lightweight coordinate snapshots sync exactly");
+            Store.Group inbox=make(b,"Photo-only end from member");Store.View shot=inbox.views.get(0);shot.calibration=null;shot.observations.clear();shot.sourceHash=SyncFiles.hash(jpeg);shot.capturedAt=1735816333000L;b.save(inbox);
+            engine(b,rb).run();engine(a,ra).run();Store.Group received=read(a,inbox.id);
+            check(received.views.size()==1&&Store.results(received).isEmpty(),"Member photo sync does not require annotations or 2D estimates");
+            check(received.views.get(0).sourceHash.equals(shot.sourceHash)&&received.views.get(0).capturedAt==shot.capturedAt,"Imported photo date and identity survive shared sync");
+            check(Arrays.equals(Files.readAllBytes(new File(a.directory(received),shot.file).toPath()),jpeg),"Member's unannotated image reaches the owner intact");
+            Store.View another=new Store.View();another.file=another.id+".jpg";another.width=16;another.height=16;Files.write(new File(b.directory(inbox),another.file).toPath(),jpeg);inbox.views.add(another);b.save(inbox);engine(b,rb).run();engine(a,ra).run();
+            check(read(a,inbox.id).views.size()==2&&read(a,inbox.id).shooter.id.equals(inbox.shooter.id),"Adding another view updates the same shared grouping and shooter");
+            int photoCount=a.list().size();engine(b,rb).run();engine(a,ra).run();check(a.list().size()==photoCount&&read(a,inbox.id).views.size()==2,"Repeated photo sync creates neither extra groupings nor views");
             SyncEngine bound=engine(a,ra);try{bound.bind("unrelated-library");throw new AssertionError("Library switch must fail");}catch(IOException expected){}
             check(read(a,id).name.equals("B second edit"),"Library-binding failure never changes local data");
             JSONObject bad=read(b,id).json();bad.getJSONArray("views").getJSONObject(0).put("file","../escape.jpg");

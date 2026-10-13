@@ -30,15 +30,16 @@ public final class Store {
         static Observation from(JSONObject j)throws JSONException{Observation o=new Observation(j.getInt("arrow"),doubles(j.getJSONArray("a")),doubles(j.optJSONArray("b")));o.source=j.optString("source","manual");o.associationWarning=j.optString("association_warning");o.confidence=j.optDouble("detector_score",Double.NaN);return o;}
     }
     public static final class View {
-        public String file,id=UUID.randomUUID().toString(),session="";
+        public String file,id=UUID.randomUUID().toString(),session="",sourceHash="";
         public int width,height,rawWidth,rawHeight,rotation;
-        public long timestamp,cameraTimestamp;
+        public long timestamp,cameraTimestamp,capturedAt;
         public double[] pose,k;
         public Geometry.Calibration calibration;
         public final List<Observation> observations=new ArrayList<>();
         public final List<double[]> rimMarks=new ArrayList<>(),innerMarks=new ArrayList<>();
         public JSONObject json()throws JSONException {
             JSONObject j=new JSONObject().put("id",id).put("file",file).put("width",width).put("height",height).put("rawWidth",rawWidth).put("rawHeight",rawHeight).put("rotation",rotation).put("timestamp_ns",timestamp).put("camera_timestamp_ns",cameraTimestamp).put("session",session);
+            if(!sourceHash.isEmpty())j.put("source_sha256",sourceHash);if(capturedAt>0)j.put("captured_at_ms",capturedAt);
             if(pose!=null)j.put("camera_pose_row_major",array(pose));if(k!=null)j.put("intrinsics",array(k));
             if(calibration!=null)j.put("calibration",new JSONObject().put("h_image_to_radius",array(calibration.h)).put("radial_fit_rms_radius",Double.isFinite(calibration.rms)?calibration.rms:JSONObject.NULL).put("source",calibration.source).put("reviewed",calibration.reviewed));
             JSONArray a=new JSONArray();for(Observation o:observations)a.put(o.json());j.put("observations",a);JSONArray rim=new JSONArray(),inside=new JSONArray();for(double[] p:rimMarks)rim.put(array(p));for(double[] p:innerMarks)inside.put(array(p));return j.put("rim_marks",rim).put("inner_marks",inside);
@@ -46,6 +47,7 @@ public final class Store {
         static View from(JSONObject j)throws JSONException {
             View v=new View();v.id=j.getString("id");v.file=j.getString("file");v.width=j.getInt("width");v.height=j.getInt("height");v.rawWidth=j.optInt("rawWidth");v.rawHeight=j.optInt("rawHeight");v.rotation=j.optInt("rotation");v.timestamp=j.optLong("timestamp_ns");v.session=j.optString("session");v.pose=doubles(j.optJSONArray("camera_pose_row_major"));v.k=doubles(j.optJSONArray("intrinsics"));
             v.cameraTimestamp=j.optLong("camera_timestamp_ns");
+            v.sourceHash=j.optString("source_sha256");if(!v.sourceHash.isEmpty()&&!v.sourceHash.matches("[a-f0-9]{64}"))throw new JSONException("Invalid source photo digest");v.capturedAt=Math.max(0,j.optLong("captured_at_ms"));
             JSONObject c=j.optJSONObject("calibration");if(c!=null){v.calibration=new Geometry.Calibration(doubles(c.getJSONArray("h_image_to_radius")),c.optDouble("radial_fit_rms_radius"),c.optString("source"));v.calibration.reviewed=c.optBoolean("reviewed");}
             JSONArray a=j.optJSONArray("observations");if(a!=null)for(int i=0;i<a.length();i++)v.observations.add(Observation.from(a.getJSONObject(i)));a=j.optJSONArray("rim_marks");if(a!=null)for(int i=0;i<a.length();i++)v.rimMarks.add(doubles(a.getJSONArray(i)));a=j.optJSONArray("inner_marks");if(a!=null)for(int i=0;i<a.length();i++)v.innerMarks.add(doubles(a.getJSONArray(i)));return v;
         }
@@ -236,16 +238,24 @@ public final class Store {
     Group read(File file)throws Exception {synchronized(FILE_LOCK){byte[] bytes;try(InputStream in=new FileInputStream(file)){bytes=SyncFiles.bytes(in,SyncFiles.JSON_LIMIT);}Group g=Group.from(new JSONObject(new String(bytes,StandardCharsets.UTF_8)));g.diskDigest=SyncFiles.hash(bytes);return g;}}
     public Bitmap bitmap(Group g,View v){return BitmapFactory.decodeFile(new File(directory(g),v.file).getAbsolutePath());}
     public View importPhoto(Context c,Group g,Uri uri)throws Exception {
-        BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;
-        try(InputStream in=c.getContentResolver().openInputStream(uri)){BitmapFactory.decodeStream(in,null,bounds);}
-        if(bounds.outWidth<=0||bounds.outHeight<=0)throw new IOException("This file is not a readable photo");
-        BitmapFactory.Options options=new BitmapFactory.Options();options.inSampleSize=1;while(Math.max(bounds.outWidth,bounds.outHeight)/options.inSampleSize>3000)options.inSampleSize*=2;
-        Bitmap b;try(InputStream in=c.getContentResolver().openInputStream(uri)){b=BitmapFactory.decodeStream(in,null,options);}
-        int orientation=1;try(InputStream in=c.getContentResolver().openInputStream(uri)){orientation=new ExifInterface(in).getAttributeInt(ExifInterface.TAG_ORIENTATION,1);}catch(IOException ignored){}
-        Matrix m=new Matrix();switch(orientation){case 2:m.setScale(-1,1);break;case 3:m.setRotate(180);break;case 4:m.setScale(1,-1);break;case 5:m.setRotate(90);m.postScale(-1,1);break;case 6:m.setRotate(90);break;case 7:m.setRotate(270);m.postScale(-1,1);break;case 8:m.setRotate(270);break;}
-        if(!m.isIdentity()){Bitmap rotated=Bitmap.createBitmap(b,0,0,b.getWidth(),b.getHeight(),m,true);if(rotated!=b)b.recycle();b=rotated;}
-        if(Math.max(b.getWidth(),b.getHeight())>2048){double s=2048.0/Math.max(b.getWidth(),b.getHeight());Bitmap small=Bitmap.createScaledBitmap(b,(int)Math.round(b.getWidth()*s),(int)Math.round(b.getHeight()*s),true);if(small!=b)b.recycle();b=small;}
-        View v=new View();saveBitmap(g,v,b);b.recycle();g.views.add(v);save(g);return v;
+        if(g.coordinatesOnly())throw new IOException("Cannot add photos to a completed coordinates-only grouping");
+        File temporary=File.createTempFile("selected-photo-",".image",c.getCacheDir());Bitmap b=null;
+        try{
+            try(InputStream in=c.getContentResolver().openInputStream(uri);OutputStream out=new FileOutputStream(temporary)){if(in==null)throw new IOException("Photo access was lost; select it again");byte[] chunk=new byte[16384];int n;long size=0;while((n=in.read(chunk))!=-1){size+=n;if(size>64L*1024*1024)throw new IOException("Photo exceeds the 64 MB import limit");out.write(chunk,0,n);}}
+            String hash=SyncFiles.hash(temporary);for(View existing:g.views)if(hash.equals(existing.sourceHash))return existing;
+            if(g.views.size()>=64)throw new IOException("A grouping can contain at most 64 photos");
+            BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;BitmapFactory.decodeFile(temporary.getPath(),bounds);
+            if(bounds.outWidth<=0||bounds.outHeight<=0)throw new IOException("This file is not a readable photo");
+            BitmapFactory.Options options=new BitmapFactory.Options();options.inSampleSize=1;while(Math.max(bounds.outWidth,bounds.outHeight)/options.inSampleSize>3000)options.inSampleSize*=2;
+            b=BitmapFactory.decodeFile(temporary.getPath(),options);if(b==null)throw new IOException("This photo could not be decoded");
+            int orientation=1;long captured=0;try{ExifInterface exif=new ExifInterface(temporary.getPath());orientation=exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,1);String date=exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL);if(date!=null){SimpleDateFormat format=new SimpleDateFormat("yyyy:MM:dd HH:mm:ss",Locale.US);format.setLenient(false);String offset=exif.getAttribute("OffsetTimeOriginal");if(offset!=null&&offset.matches("[+-][0-9]{2}:[0-9]{2}"))format.setTimeZone(TimeZone.getTimeZone("GMT"+offset));captured=format.parse(date).getTime();if(captured<946684800000L||captured>System.currentTimeMillis()+86400000L)captured=0;}}catch(Exception ignored){}
+            Matrix m=new Matrix();switch(orientation){case 2:m.setScale(-1,1);break;case 3:m.setRotate(180);break;case 4:m.setScale(1,-1);break;case 5:m.setRotate(90);m.postScale(-1,1);break;case 6:m.setRotate(90);break;case 7:m.setRotate(270);m.postScale(-1,1);break;case 8:m.setRotate(270);break;}
+            if(!m.isIdentity()){Bitmap rotated=Bitmap.createBitmap(b,0,0,b.getWidth(),b.getHeight(),m,true);if(rotated!=b)b.recycle();b=rotated;}
+            if(Math.max(b.getWidth(),b.getHeight())>2048){double s=2048.0/Math.max(b.getWidth(),b.getHeight());Bitmap small=Bitmap.createScaledBitmap(b,Math.max(1,(int)Math.round(b.getWidth()*s)),Math.max(1,(int)Math.round(b.getHeight()*s)),true);if(small!=b)b.recycle();b=small;}
+            View v=new View();v.sourceHash=hash;v.capturedAt=captured;saveBitmap(g,v,b);long created=g.created;
+            if(g.diskDigest==null&&g.views.isEmpty()&&captured>0)g.created=captured;
+            g.views.add(v);try{save(g);}catch(Exception failure){g.views.remove(v);g.created=created;throw failure;}return v;
+        }finally{if(b!=null)b.recycle();if(!temporary.delete())android.util.Log.w("RedwoodArrows","Could not remove temporary imported photo");}
     }
     public void saveBitmap(Group g,View v,Bitmap b)throws IOException {v.file=v.id+".jpg";v.width=b.getWidth();v.height=b.getHeight();try(FileOutputStream out=new FileOutputStream(new File(directory(g),v.file))){if(!b.compress(Bitmap.CompressFormat.JPEG,95,out))throw new IOException("Photo save failed");out.getFD().sync();}}
     public static final class Result {
