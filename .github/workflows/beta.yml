@@ -16,6 +16,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Install fixed SDK tools
         run: sdkmanager 'platforms;android-34' 'build-tools;36.1.0'
       - name: Sync integration tests (invented data only)

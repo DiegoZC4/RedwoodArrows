@@ -2,8 +2,8 @@
   "files": [
     {
       "path": ".github/workflows/beta.yml",
-      "bytes": 2980,
-      "sha256": "b979bac93feec331f2c75574965d2e280caf7aeeedd1551a9f1690e080c961a5"
+      "bytes": 3080,
+      "sha256": "eb76161ff1a2bf267815047d3420e4afc63207be1bbf45121f651b48934f9127"
     },
     {
       "path": ".gitignore",
