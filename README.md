@@ -72,6 +72,25 @@ JPEG aliases deduplicate in cloud storage. When reassigning an arrow, its older
 target alignment in other photos is excluded until confirmed again; its pixel
 marks remain available. Unselected arrows retain their existing alignments.
 
+**Progress** now opens an offline shooter-comparison graph with separate colored
+lines/markers. Tap **All ranges**, **10 yd**, **15 yd**, or another saved distance
+directly; choose **Daily**, rolling **30 arrows**, or rolling **100 arrows**.
+Tap/scrub the graph or use its previous/next arrows for per-shooter values and
+coverage. **Details** retains the individual shot plot and older progress tools.
+The comparison refreshes when shared labels/positions sync, without changing data.
+
+The plotted measure is within-round angular radial standard deviation in mrad:
+each arrow is normalized by its entered distance, then squared deviations from
+each round's center are pooled with denominator sum(n−1). It is not standard
+error, full group diameter, or bullseye accuracy. All ranges averages the per-range
+variances equally; line segments break when the represented range mix changes.
+Fixed-distance filtering is best for like-for-like comparisons. Rolling windows
+retain whole rounds and overlap. Unknown distances, provisional owners and
+mixed-distance walk-up rounds are excluded; missing positions/misses are counted
+but never placed at zero. Hollow dots indicate a small sample or an unfinished
+rolling window. Equipment/review filters are under **Filters**. With only one
+dated session the Daily graph correctly shows points, not an invented trend.
+
 ## Try it
 
 1. Download the APK above and permit installation from your browser when Android

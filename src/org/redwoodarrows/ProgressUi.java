@@ -11,12 +11,15 @@ import java.util.*;
 final class ProgressUi {
     final MainActivity a;String shooter="",setup="";boolean angular,checkedOnly=false,initialized;int window=100;double distance=Double.NaN;
     ProgressStats stats;ProgressStats.Window current;List<Store.Group> groups;
-    ProgressUi(MainActivity a){this.a=a;}
+    boolean comparing=true;final ConsistencyUi comparison;long syncedGeneration;
+    ProgressUi(MainActivity a){this.a=a;comparison=new ConsistencyUi(this);}
     void show(){
+        syncedGeneration=SyncRuntime.libraryGeneration.get();
+        if(comparing){comparison.show();return;}
         a.rememberGroups();a.page="progress";a.canvas=null;groups=a.store.list();
         if(!initialized){shooter=a.shooters.active().id;if(shooter.isEmpty()&&!a.shooters.roster.all().isEmpty())shooter=a.shooters.roster.all().get(0).id;selectContext();initialized=true;}
         stats=new ProgressStats(groups,shooter,setup,angular,checkedOnly,distance);current=stats.recent(window);
-        a.shell("Progress");a.root.removeView(a.heading);LinearLayout top=a.row();top.setGravity(Gravity.CENTER_VERTICAL);Button back=a.button("Gallery",a::home);back.setTag("progress-back");top.addView(back,new LinearLayout.LayoutParams(a.dp(76),a.dp(44)));a.heading.setPadding(a.dp(12),0,0,0);top.addView(a.heading,new LinearLayout.LayoutParams(0,a.dp(48),1));Button help=a.button("?",this::help);help.setContentDescription("Progress statistics explained");top.addView(help,new LinearLayout.LayoutParams(a.dp(44),a.dp(44)));a.add(a.root,top);
+        header(false);
         if(a.shooters.roster.all().isEmpty()){a.add(a.root,a.text("Add a shooter to keep your progress separate.",16,MainActivity.MUTED));a.add(a.root,a.button("People",a.shooters::chooseActive));return;}
         ShooterRoster.Person person=a.shooters.roster.find(shooter);if(person==null)person=ShooterRoster.UNASSIGNED;
         ShooterPager people=new ShooterPager(a,a.shooters.roster.all(),person,false,"Progress for",p->{shooter=p.id;selectContext();show();return true;});people.setTag("progress-shooter");a.add(a.root,people);
@@ -50,6 +53,14 @@ final class ProgressUi {
             Button end=a.button(new GroupPresentation(g).caption()+" · "+(g.practice.arrowMeters.isEmpty()?g.practice.label():"Walk-up distances")+" · "+(g.practice.isChecked(g)?"checked":"unchecked"),()->{a.returnToProgress=true;a.openGroup(g);});end.setTag("progress-end:"+g.id);a.add(body,end);
         }
     }
+    void header(boolean compare){
+        a.shell("Progress");a.root.removeView(a.heading);LinearLayout top=a.row();top.setGravity(Gravity.CENTER_VERTICAL);
+        Button back=a.button("‹",a::home);back.setTag("progress-back");back.setContentDescription("Back to grouping gallery");top.addView(back,new LinearLayout.LayoutParams(a.dp(44),a.dp(44)));
+        a.heading.setPadding(a.dp(10),0,0,0);top.addView(a.heading,new LinearLayout.LayoutParams(0,a.dp(48),1));
+        Button switchView=a.button(compare?"Details":"Compare",()->{comparing=!comparing;show();});switchView.setTag(compare?"progress-details":"progress-compare");top.addView(switchView,new LinearLayout.LayoutParams(a.dp(78),a.dp(44)));
+        Button help=a.button("?",()->{if(compare)comparison.help();else help();});help.setContentDescription("Progress statistics explained");top.addView(help,new LinearLayout.LayoutParams(a.dp(44),a.dp(44)));a.add(a.root,top);
+    }
+    void refreshFromSync(){if(comparing&&!comparison.optionsOpen()&&syncedGeneration!=SyncRuntime.libraryGeneration.get())show();}
     void selectContext(){distance=Double.NaN;setup="";angular=false;if(groups!=null)for(Store.Group g:groups)if(g.hasData()&&g.shooter.id.equals(shooter)){setup=g.practice.setup;angular=Practice.distance(g.practice.meters)||!g.practice.arrowMeters.isEmpty();break;}}
     void metric(LinearLayout row,String label,String value,String unit,String tag){LinearLayout cell=new LinearLayout(a);cell.setOrientation(1);cell.setPadding(a.dp(10),a.dp(5),a.dp(10),a.dp(5));cell.setBackground(a.rounded(MainActivity.PANEL));TextView n=a.text(value,25,MainActivity.FG);n.setTypeface(null,1);n.setTag(tag);cell.addView(n);cell.addView(a.text(label,11,MainActivity.MUTED));cell.addView(a.text(unit,11,MainActivity.MUTED));a.cell(row,cell);}
     void chooseSetup(){TreeSet<String> choices=new TreeSet<>();for(Store.Group g:groups)if(g.hasData()&&g.shooter.id.equals(shooter))choices.add(g.practice.setup);if(choices.isEmpty())choices.add("");List<String> values=new ArrayList<>(choices);String[] labels=new String[values.size()];for(int i=0;i<labels.length;i++)labels[i]=values.get(i).isEmpty()?"Unrecorded setup":values.get(i);new AlertDialog.Builder(a).setTitle("Keep equipment setups separate").setItems(labels,(d,i)->{setup=values.get(i);distance=Double.NaN;show();}).setNegativeButton("Cancel",null).show();}
