@@ -25,7 +25,9 @@ choose the actual shooter separately.
 
 **Take photo** opens the in-app camera with the existing automatic continuous
 flashlight. One shutter tap saves the photo and opens **Arrows → targets**; no
-sweep, arrow labels or review is required to sync the photo. **Add photos** opens Android's
+sweep, arrow labels or review is required to sync the photo. Arrow-dot suggestions
+start automatically on the saved photo, locally and offline; capture never waits
+for them. Correct mistakes and assign targets, then Save. **Add photos** opens Android's
 photo picker directly (with a Files fallback), without whole-library access.
 Select up to 12 views of the **same unchanged grouping** at once. For another
 end, start again from the gallery. Within a grouping, the same two buttons append
@@ -37,8 +39,8 @@ location metadata; the capture date is retained when available.
 Photo intake keeps these photo copies for automatic shared sync, independently
 of the **2D only** preference for new analyzed sweeps. Existing 2D-only groupings
 are not converted or altered. Signed-in phones queue saved photos offline and
-sync when connected, including groupings with no arrow positions yet. **Suggest
-dots** in the photo editor is optional and separate from sharing. The ordinary
+sync when connected, including groupings with no arrow positions yet. The newly
+imported photo opened in the editor also gets automatic suggestions. The ordinary
 moving-phone **Sweep** remains available; detailed capture options are under
 **More → New grouping options**. Photos of different physical ends should not be
 selected as one grouping; sync does not infer that they are the same end.
@@ -50,8 +52,11 @@ base distance. Vertical swipes still scroll the gallery. Walk-up overrides and
 all saved coordinates remain intact. The next-end distance is remembered
 separately; correcting an old end never changes it.
 
-In **Arrows → targets**, tap **Add** to mark shaft-entry centers (drag dots to
-refine), or use optional **Suggest dots**. Tap **All**, or **None** then select
+In **Arrows → targets**, dots appear automatically after capture. Use **Add** for
+missed shaft-entry centers (drag dots to refine), and **Remove** for false positives.
+**Retry dots** is only a fallback. Reopening a saved photo does not rerun detection
+or resurrect removed dots, and late results cannot overwrite edits made while
+detection runs. Tap **All**, or **None** then select
 individual arrow dots, and tap **Target** followed by their intended bullseye.
 Repeat for another subset if you switched bullseyes during the end. Field/Hunter
 faces get automatic ring outlines; **Mark rings/corners** is the manual fallback.

@@ -12,8 +12,8 @@
     },
     {
       "path": "AndroidManifest.xml",
-      "bytes": 2237,
-      "sha256": "39e0cfc3722b81979783d0bea8896c14e34e4ecfa6784ad27970b8bc947c811f"
+      "bytes": 2233,
+      "sha256": "ebac7b932fffd7fc3faf74a517c5cf6a28f0cb1acd09403968dee226e7081840"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 10416,
-      "sha256": "7e72f4a09a830dd9b4e74479764123f30cff3fcef329c1710f35a35ef64c4ece"
+      "bytes": 10804,
+      "sha256": "2ffc8505a2636bdec74eb3162efd592fbef3bb97fa05b35ff2d848f249a5041d"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -237,8 +237,8 @@
     },
     {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 44490,
-      "sha256": "1a04001a911a2fd8aa0c97f48683a9ae40511a460f856362669b4f098fdfc413"
+      "bytes": 44760,
+      "sha256": "aecaa5a524fccc128c83639d8aec70981ec6090e766464d58872ec06b639f6ba"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -247,8 +247,8 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignmentUi.java",
-      "bytes": 13320,
-      "sha256": "4a92ac48288104ce0a15aca4aebf9f522d5a9c4b5755583beb6f1da17c1114ef"
+      "bytes": 14063,
+      "sha256": "3a7b289aa9581579026ed611979227cb68435d43126aaf8788153738c8128717"
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignments.java",
@@ -262,8 +262,8 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoImport.java",
-      "bytes": 5751,
-      "sha256": "e8cda461504c0a4ec6bfb493324e555a3531281cfe9ebd5d072897c7758d49a9"
+      "bytes": 5756,
+      "sha256": "63834a8f29d80d6e9537ac7dd64a26e2ec5945f1841147ec659ade8d89a09b9a"
     },
     {
       "path": "src/org/redwoodarrows/Practice.java",

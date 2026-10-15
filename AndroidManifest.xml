@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.redwoodarrows" android:versionCode="24" android:versionName="0.24.0-photo-targets">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.redwoodarrows" android:versionCode="25" android:versionName="0.25.0-auto-dots">
     <uses-sdk android:minSdkVersion="31" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
