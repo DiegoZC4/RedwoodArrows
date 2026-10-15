@@ -10,7 +10,7 @@ final class GroupPresentation {
     final List<double[]> points=new ArrayList<>();final LinkedHashSet<String> warnings=new LinkedHashSet<>();
     final int located,unresolved,photos;final double spread;
     GroupPresentation(Store.Group group){
-        this.group=group;results=Store.results(group);photos=group.views.size();
+        this.group=group;results=Store.results(group);photos=PhotoAssignments.photoIndices(group).size();
         for(Store.Result r:results){if(Double.isFinite(r.x)&&Double.isFinite(r.y))points.add(new double[]{r.x,r.y});if(!r.warning.trim().isEmpty())for(String note:r.warning.trim().split("(?<=\\.)\\s+|\\s+·\\s+"))if(!note.trim().isEmpty())warnings.add(note.trim());}
         located=points.size();unresolved=results.size()-located;spread=Geometry.spread(points);
     }

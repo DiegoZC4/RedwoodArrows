@@ -24,8 +24,8 @@ diegozc.com. Signing in does not assign the photographed end to that account:
 choose the actual shooter separately.
 
 **Take photo** opens the in-app camera with the existing automatic continuous
-flashlight. One shutter tap saves the photo and opens its grouping; no sweep,
-arrow labels or review is required to sync it. **Add photos** opens Android's
+flashlight. One shutter tap saves the photo and opens **Arrows → targets**; no
+sweep, arrow labels or review is required to sync the photo. **Add photos** opens Android's
 photo picker directly (with a Files fallback), without whole-library access.
 Select up to 12 views of the **same unchanged grouping** at once. For another
 end, start again from the gallery. Within a grouping, the same two buttons append
@@ -37,8 +37,8 @@ location metadata; the capture date is retained when available.
 Photo intake keeps these photo copies for automatic shared sync, independently
 of the **2D only** preference for new analyzed sweeps. Existing 2D-only groupings
 are not converted or altered. Signed-in phones queue saved photos offline and
-sync when connected, including groupings with no arrow positions yet. **Find
-arrows** in a grouping is optional and separate from sharing. The ordinary
+sync when connected, including groupings with no arrow positions yet. **Suggest
+dots** in the photo editor is optional and separate from sharing. The ordinary
 moving-phone **Sweep** remains available; detailed capture options are under
 **More → New grouping options**. Photos of different physical ends should not be
 selected as one grouping; sync does not infer that they are the same end.
@@ -50,12 +50,22 @@ base distance. Vertical swipes still scroll the gallery. Walk-up overrides and
 all saved coordinates remain intact. The next-end distance is remembered
 separately; correcting an old end never changes it.
 
-On a grouping photo, **Choose target** lets you tap the intended bullseye,
-inspect its ring overlay and save. Field/Hunter faces support automatic outlines
-and a printed-size correction; other designs use manual calibration. Cancel
-does not edit anything, arrow marks/photos stay intact, and future analysis
-keeps the selected reference face. Other views must have their new alignments
-reviewed before contributing coordinates. This correction syncs offline-first.
+In **Arrows → targets**, tap **Add** to mark shaft-entry centers (drag dots to
+refine), or use optional **Suggest dots**. Tap **All**, or **None** then select
+individual arrow dots, and tap **Target** followed by their intended bullseye.
+Repeat for another subset if you switched bullseyes during the end. Field/Hunter
+faces get automatic ring outlines; **Mark rings/corners** is the manual fallback.
+The app never infers intent from which bullseye an arrow landed closest to.
+**Undo** reverses edits; **Save** stores each arrow relative to its assigned face
+and queues the correction for sync. Leaving without saving keeps the captured
+photo but discards annotation changes. Existing groupings have **Assign arrows
+to targets** too. All faces in a grouping use its selected printed-size preset.
+
+Multiple faces remain one grouping and one logical photo, with disjoint arrow
+subsets and target-specific calibrations in the existing sync format. Identical
+JPEG aliases deduplicate in cloud storage. When reassigning an arrow, its older
+target alignment in other photos is excluded until confirmed again; its pixel
+marks remain available. Unselected arrows retain their existing alignments.
 
 ## Try it
 

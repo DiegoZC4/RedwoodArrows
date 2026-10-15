@@ -102,11 +102,11 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                 String counts=String.format(Locale.US,"%d photos · %d useful angles · %.0f° span",count,a.angles,a.spanDegrees)+(a.arrows>0?" · "+a.stableArrows+" / "+a.arrows+" stable entries":"");
                 final String text=photoOnly?(lastCaptureError.isEmpty()?(analysisPending.get()?"Saving photo…":!lightReady?"Checking the light…":"Take a photo of this grouping\nKeep the complete target and arrows in view."):lastCaptureError):title+"\n"+advice+"\n"+counts,lightText=light.label();activity.runOnUiThread(()->{if(!closed&&!finishing){if(!text.contentEquals(status.getText()))status.setText(text);if(!lightText.contentEquals(lightButton.getText()))lightButton.setText(lightText);}});}
             boolean autoFrame=automatic&&!finishing&&!finishRequested&&lightReady&&tracked&&settled&&count<SweepPolicy.LIMIT&&keyframes.ready(translation,frame.getTimestamp());
-            if(!finishing&&!finishRequested&&!analysisPending.get()&&((requested.get()&&(!photoOnly||lightReady))||autoFrame)&&analysisPending.compareAndSet(false,true)){
+            if(!finishing&&!finishRequested&&!analysisPending.get()&&(requested.get()||autoFrame)&&analysisPending.compareAndSet(false,true)){
                 requested.set(false);
                 // A photo remains useful without VIO. Never attach a stale or
                 // untracked pose; those views must use texture registration.
-                try{if(tracked&&origin==null)origin=session.createAnchor(camera.getPose());}catch(Exception e){analysisPending.set(false);throw e;}
+                try{if(tracked&&!photoOnly&&origin==null)origin=session.createAnchor(camera.getPose());}catch(Exception e){analysisPending.set(false);throw e;}
                 try(Image image=frame.acquireCameraImage()){
                     // ARCore's CPU Image uses the Frame timestamp. The Android
                     // Camera2 timestamp has a different convention on this S21
@@ -117,7 +117,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                     CameraIntrinsics intrinsics=camera.getImageIntrinsics();float[] f=intrinsics.getFocalLength(),c=intrinsics.getPrincipalPoint();int[] dims=intrinsics.getImageDimensions();
                     if(dims[0]!=image.getWidth()||dims[1]!=image.getHeight())throw new IllegalStateException("Camera calibration dimensions changed; capture again");
                     view.k=new double[]{f[0],0,c[0],0,f[1],c[1],0,0,1};
-                    if(tracked){float[] column=new float[16];origin.getPose().inverse().compose(camera.getPose()).toMatrix(column,0);view.pose=new double[16];for(int i=0;i<4;i++)for(int j=0;j<4;j++)view.pose[4*i+j]=column[4*j+i];}
+                    if(tracked&&origin!=null){float[] column=new float[16];origin.getPose().inverse().compose(camera.getPose()).toMatrix(column,0);view.pose=new double[16];for(int i=0;i<4;i++)for(int j=0;j<4;j++)view.pose[4*i+j]=column[4*j+i];}
                     float[] source={0,0,image.getWidth(),0},dest=new float[4];frame.transformCoordinates2d(Coordinates2d.IMAGE_PIXELS,source,Coordinates2d.VIEW,dest);
                     int rotation=(int)Math.round(Math.toDegrees(Math.atan2(dest[3]-dest[1],dest[2]-dest[0]))/90)*90;view.rotation=(rotation+360)%360;
                     Bitmap raw=bitmap(image),rotated=raw;
@@ -125,7 +125,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                     Store.Group snapshot;
                     try{store.saveBitmap(group,view,rotated);group.views.add(view);store.save(group);count++;if(tracked&&keyframes.ready(translation,frame.getTimestamp()))keyframes.captured(translation,frame.getTimestamp());snapshot=Store.Group.from(group.json());}finally{if(rotated!=raw)rotated.recycle();raw.recycle();}
                     final boolean hadTracking=tracked;
-                    activity.runOnUiThread(()->{if(!closed){capture.setEnabled(false);listener.captured(snapshot);if(!hadTracking)Toast.makeText(activity,"Photo saved without motion tracking. It cannot supply measured sweep angles.",Toast.LENGTH_LONG).show();}});
+                    activity.runOnUiThread(()->{if(!closed){capture.setEnabled(false);listener.captured(snapshot);if(!hadTracking&&!photoOnly)Toast.makeText(activity,"Photo saved without motion tracking. It cannot supply measured sweep angles.",Toast.LENGTH_LONG).show();}});
                 }catch(NotYetAvailableException e){analysisPending.set(false);throw new IllegalStateException("Camera frame is not ready; try once more");}
                 catch(Exception e){analysisPending.set(false);throw e;}
             }

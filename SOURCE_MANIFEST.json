@@ -13,7 +13,7 @@
     {
       "path": "AndroidManifest.xml",
       "bytes": 2237,
-      "sha256": "0b8a6819ed6d30ee43287c8d77a662aae2bb348e6344fde6ccd481537a6a5254"
+      "sha256": "39e0cfc3722b81979783d0bea8896c14e34e4ecfa6784ad27970b8bc947c811f"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9666,
-      "sha256": "811a9816dfab022b8b2a4b17bee70a3c10bd9f32658d07d2b5a9388d143ca4c7"
+      "bytes": 10416,
+      "sha256": "7e72f4a09a830dd9b4e74479764123f30cff3fcef329c1710f35a35ef64c4ece"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -202,13 +202,13 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupDetails.java",
-      "bytes": 8928,
-      "sha256": "cd7dec34007bfbfc570691df3557d2f8b66f23e8f4aa2b390a4525339fa97834"
+      "bytes": 9111,
+      "sha256": "3bc09dbc98efc357a9a29b794efdb7cd1b718ee26e3b7fac6c6f0142b62f8fe7"
     },
     {
       "path": "src/org/redwoodarrows/GroupImageViewer.java",
-      "bytes": 5214,
-      "sha256": "e76bd91ba3b968fe50f358bca9744c3af62649bc84d12b1ff626aff4f1a10633"
+      "bytes": 5226,
+      "sha256": "f56faa3b3b7ad866e69430485b595b3ae39f5dc8ce6b3bc5cae7609c8226a6ba"
     },
     {
       "path": "src/org/redwoodarrows/GroupImages.java",
@@ -217,8 +217,8 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupPresentation.java",
-      "bytes": 2746,
-      "sha256": "6d28abe5a1ffb977f7686e689616c45dfc2699a6b3af4d391e0335391f3cea4a"
+      "bytes": 2771,
+      "sha256": "621f1a3911931feb8920ab8befb37823fd98e11de7e6478788c716f73bd351b6"
     },
     {
       "path": "src/org/redwoodarrows/GroupingGallery.java",
@@ -237,8 +237,8 @@
     },
     {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 44376,
-      "sha256": "55e1ed775517d02ac7245fb3cc7ea41dc3e98be8241ed2d1c01155172f2ed3cb"
+      "bytes": 44490,
+      "sha256": "1a04001a911a2fd8aa0c97f48683a9ae40511a460f856362669b4f098fdfc413"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -246,14 +246,24 @@
       "sha256": "a39987f4590836c6466827344d0c2a3e309cfe708a29daf24e244fdd2b74dbce"
     },
     {
+      "path": "src/org/redwoodarrows/PhotoAssignmentUi.java",
+      "bytes": 13320,
+      "sha256": "4a92ac48288104ce0a15aca4aebf9f522d5a9c4b5755583beb6f1da17c1114ef"
+    },
+    {
+      "path": "src/org/redwoodarrows/PhotoAssignments.java",
+      "bytes": 9247,
+      "sha256": "a2773d37379cf972ad37dc515fcbd9143e0322d052f12b24ccadf84ccdc77331"
+    },
+    {
       "path": "src/org/redwoodarrows/PhotoCanvas.java",
-      "bytes": 7884,
-      "sha256": "eb8372daa909a5763befcfdc522fe35603fefed7284c89115b2f1ec29ffef030"
+      "bytes": 9760,
+      "sha256": "3cd8f53b510e15b09d3b45184ea246750eebcd51b469658aa6beb6e7cf5f1fab"
     },
     {
       "path": "src/org/redwoodarrows/PhotoImport.java",
-      "bytes": 5708,
-      "sha256": "b6a5c79f85e2a3881d3e6c5c806118331d369057dc017d9aa0cd58b29f1ab56f"
+      "bytes": 5751,
+      "sha256": "e8cda461504c0a4ec6bfb493324e555a3531281cfe9ebd5d072897c7758d49a9"
     },
     {
       "path": "src/org/redwoodarrows/Practice.java",
@@ -337,8 +347,8 @@
     },
     {
       "path": "src/org/redwoodarrows/SweepView.java",
-      "bytes": 17686,
-      "sha256": "1693091f9dc6b31b868c9d8e32b976966651e31c9ce0869afdc201c52abdff6f"
+      "bytes": 17696,
+      "sha256": "d7dc4679dd2867b7d747b737daec5842db4d3b62feda482cf2bab939d68554e7"
     },
     {
       "path": "src/org/redwoodarrows/SyncDiagnostics.java",
@@ -451,6 +461,11 @@
       "sha256": "c450750f3fb070387ec15874633ced7015c800aaf49844635288e85851ae4484"
     },
     {
+      "path": "tests/PhotoAssignmentsTest.java",
+      "bytes": 6106,
+      "sha256": "15c8925b2c873ab538f52577db2cb8fe1a1a7730139b3a7aa1bf886a2efd5186"
+    },
+    {
       "path": "tests/ReleaseUpdateTest.java",
       "bytes": 6546,
       "sha256": "99ec497cbbba38f905b883c1c7c7a146a6dceea2859d4e3eba57670dd01a2296"
@@ -492,8 +507,8 @@
     },
     {
       "path": "tools/test_sync.sh",
-      "bytes": 1393,
-      "sha256": "769bba6e136ade9716362ac1564eec1c9064655a157932e8369331a8c69da4ee"
+      "bytes": 1528,
+      "sha256": "691c508a0589d9b5c1f6b7761d089b89122a5f5ae3dfefaee16d9df561b53898"
     }
   ],
   "personal_photos": 0,
