@@ -24,10 +24,19 @@ diegozc.com. Signing in does not assign the photographed end to that account:
 choose the actual shooter separately.
 
 **Take photo** opens the in-app camera with the existing automatic continuous
-flashlight. One shutter tap saves the photo and opens **Arrows → targets**; no
+flashlight. Shooter and distance are editable directly above the shutter: tap or
+swipe the name to change person; swipe distance, or tap for exact entry. New
+groupings automatically suggest the next saved person in turn and that person's
+last distance. With two people this alternates; one person repeats. Cancelled
+captures and extra views of the same grouping do not consume a turn. You can
+override the suggestion for solo rounds. Unknown or mixed walk-up distances stay
+blank. These defaults work offline from the saved library and survive restart.
+One shutter tap saves the photo and opens **Arrows → targets**; no
 sweep, arrow labels or review is required to sync the photo. Arrow-dot suggestions
 start automatically on the saved photo, locally and offline; capture never waits
-for them. Correct mistakes and assign targets, then Save. **Add photos** opens Android's
+for them. Correct mistakes and assign targets, then Save. Shooter and distance
+can also be corrected in this review; Save commits them with the annotations.
+**Add photos** opens Android's
 photo picker directly (with a Files fallback), without whole-library access.
 Select up to 12 views of the **same unchanged grouping** at once. For another
 end, start again from the gallery. Within a grouping, the same two buttons append
@@ -49,8 +58,10 @@ Distance is directly adjustable under each grouping's shooter and in the detail
 header: swipe left/right to increase/decrease, then release to save. Yard steps
 are 1 through 20, then 5. Tap for an exact distance or meters, hold to clear the
 base distance. Vertical swipes still scroll the gallery. Walk-up overrides and
-all saved coordinates remain intact. The next-end distance is remembered
-separately; correcting an old end never changes it.
+all saved coordinates remain intact. New captures remember each person's latest
+saved distance separately; they never borrow the other shooter's distance.
+Changing a name before the shutter restores that person's range; correcting the
+name on an existing grouping keeps that grouping's actual distance.
 
 To label several rounds, choose a day in the gallery and tap **Select** (or hold
 a round). Tap thumbnails to include/exclude them, **All** for the whole day, or

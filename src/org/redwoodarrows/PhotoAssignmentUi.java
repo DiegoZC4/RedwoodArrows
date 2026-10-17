@@ -9,17 +9,18 @@ import java.util.*;
 /** Capture first; target assignment never waits for a neural detection. */
 final class PhotoAssignmentUi extends Dialog {
     final MainActivity a;final PhotoAssignments model;final PhotoCanvas photo;final boolean autoSuggest;
-    final TextView status;final Button save,suggest,manual;final Button[] modes=new Button[3];
+    final TextView status;final Button save,suggest,manual;final Button[] modes=new Button[3];final CaptureLabels labels;
     final Set<Integer> selected=new TreeSet<>();final ArrayDeque<String> undo=new ArrayDeque<>();
     final List<Geometry.Calibration> candidates=new ArrayList<>();
     final List<double[]> outer=new ArrayList<>(),inner=new ArrayList<>();
-    Bitmap bitmap;String mode="select";boolean loaded,closed,saving,finding,suggestionAttempted;int generation;
+    Bitmap bitmap;String mode="select";boolean loaded,closed,saving,finding,suggestionAttempted,labelsEdited;int generation;
     PhotoAssignmentUi(MainActivity activity,Store.Group group,int index,boolean autoSuggest)throws Exception {
         super(activity,android.R.style.Theme_Material_NoActionBar_Fullscreen);a=activity;model=new PhotoAssignments(group,group.views.get(index).id);this.autoSuggest=autoSuggest;
         LinearLayout root=new LinearLayout(a);root.setOrientation(1);root.setBackgroundColor(MainActivity.BG);root.setPadding(a.dp(10),a.dp(6),a.dp(10),a.dp(8));
         LinearLayout header=a.row();Button back=a.button("Back",this::onBackPressed);back.setTag("assign-back");header.addView(back,new LinearLayout.LayoutParams(a.dp(64),a.dp(44)));
         TextView title=a.text("Arrows → targets",20,MainActivity.FG);title.setTypeface(null,1);title.setGravity(Gravity.CENTER);header.addView(title,new LinearLayout.LayoutParams(0,a.dp(48),1));
         save=a.button("Save",this::commit);save.setTag("assign-save");save.setBackground(a.rounded(MainActivity.ACCENT));save.setTextColor(MainActivity.BG);save.setEnabled(false);header.addView(save,new LinearLayout.LayoutParams(a.dp(64),a.dp(44)));root.addView(header);
+        labels=new CaptureLabels(a,()->model.draft,false,(person,practice)->{if(saving||closed)return false;if(!model.draft.shooter.id.equals(person.id))Store.confirmShooter(model.draft,person);model.draft.practice=Practice.from(practice.json());labelsEdited=true;return true;});root.addView(labels);
         status=a.text("Loading saved photo…",13,MainActivity.MUTED);status.setTag("assign-status");status.setMinHeight(a.dp(40));status.setMaxLines(2);root.addView(status);
         photo=new PhotoCanvas(a,new PhotoCanvas.Listener(){
             public void tap(double x,double y){tapAt(x,y);}public void proposal(double[] line){}
@@ -53,7 +54,7 @@ final class PhotoAssignmentUi extends Dialog {
         candidates.clear();candidates.addAll(ordered);
         photo.frame=model.overlay();photo.preset=model.draft.preset();photo.mode=mode;photo.outer=outer;photo.inner=inner;photo.targetLabels=model.labels();photo.targetOutlines=candidates;photo.selectedIds=selected;photo.readOnly=saving;photo.invalidate();
         for(int i=0;i<3;i++){boolean active=mode.equals(new String[]{"select","add","target"}[i]);modes[i].setBackground(a.rounded(active?MainActivity.ACCENT:MainActivity.PANEL));modes[i].setTextColor(active?MainActivity.BG:MainActivity.FG);modes[i].setSelected(active);modes[i].setEnabled(!saving&&(i!=2||!selected.isEmpty()));}
-        save.setEnabled(!saving);suggest.setEnabled(!saving&&!finding);suggest.setText(finding?"Finding dots…":suggestionAttempted?"Retry dots":"Find dots");manual.setEnabled(!saving&&(!selected.isEmpty()||mode.equals("outer")||mode.equals("inner")||mode.equals("corners")));
+        labels.setEnabled(!saving);save.setEnabled(!saving);suggest.setEnabled(!saving&&!finding);suggest.setText(finding?"Finding dots…":suggestionAttempted?"Retry dots":"Find dots");manual.setEnabled(!saving&&(!selected.isEmpty()||mode.equals("outer")||mode.equals("inner")||mode.equals("corners")));
         manual.setText(mode.equals("outer")?"Next: inner ring":mode.equals("inner")?"Fit & assign":mode.equals("corners")?"Fit & assign":model.draft.preset().circular()?"Mark rings":"Mark corners");
         if(mode.equals("outer"))status.setText(outer.size()+" outer marks · first defines up · add 8+ around the rim");
         else if(mode.equals("inner"))status.setText(inner.size()+" inner marks · "+model.draft.preset().innerHint);
@@ -63,7 +64,7 @@ final class PhotoAssignmentUi extends Dialog {
         else status.setText(finding?"Finding arrow dots · you can keep editing":selected.size()+" / "+model.ids().size()+" selected · tap dots, or All → target");
     }catch(Exception e){status.setText("Could not display marks: "+e.getMessage());}}
     void snapshot(){try{undo.addLast(model.snapshot());while(undo.size()>25)undo.removeFirst();}catch(Exception e){status.setText(e.getMessage());}}
-    void undo(){if(saving)return;try{if(mode.equals("outer")||mode.equals("corners")){if(!outer.isEmpty())outer.remove(outer.size()-1);}else if(mode.equals("inner")){if(!inner.isEmpty())inner.remove(inner.size()-1);}else if(!undo.isEmpty()){model.restore(undo.removeLast());selected.retainAll(model.ids());}refresh();}catch(Exception e){status.setText(e.getMessage());}}
+    void undo(){if(saving)return;try{if(mode.equals("outer")||mode.equals("corners")){if(!outer.isEmpty())outer.remove(outer.size()-1);}else if(mode.equals("inner")){if(!inner.isEmpty())inner.remove(inner.size()-1);}else if(!undo.isEmpty()){ShooterRoster.Person person=model.draft.shooter;Practice practice=model.draft.practice;boolean confirmed=CaptureDefaults.confirmed(model.draft);model.restore(undo.removeLast());if(confirmed)Store.confirmShooter(model.draft,person);else model.draft.shooter=person;model.draft.practice=practice;model.draft.practice.checked="";selected.retainAll(model.ids());}refresh();}catch(Exception e){status.setText(e.getMessage());}}
     void tapAt(double x,double y){if(!loaded||saving)return;try{
         if(mode.equals("add")){snapshot();selected.add(model.add(x,y));refresh();}
         else if(mode.equals("target")){int chosen=TargetSelection.nearest(candidates,x,y);if(chosen<0){status.setText("No outline here. Use Mark rings, then assign the selected arrows.");return;}assign(candidates.get(chosen));}
@@ -96,6 +97,6 @@ final class PhotoAssignmentUi extends Dialog {
             a.runOnUiThread(()->{a.busy=false;saving=false;if(closed||a.isDestroyed())return;if(result==null){setCancelable(true);refresh();status.setText("Not saved: "+problem);return;}a.snapshot();a.group=result;a.analysis=null;a.groupImages.thumbs.evictAll();dismiss();a.results();SyncRuntime.saved(a);});});
     }
     void closeWithActivity(){closed=true;super.dismiss();}
-    @Override public void onBackPressed(){if(saving)return;if(model.revision==0){dismiss();return;}new AlertDialog.Builder(a).setMessage("Discard annotation changes? The saved photo is kept.").setPositiveButton("Discard",(d,w)->dismiss()).setNegativeButton("Keep editing",null).show();}
+    @Override public void onBackPressed(){if(saving)return;if(model.revision==0&&!labelsEdited){dismiss();return;}new AlertDialog.Builder(a).setMessage("Discard changes to labels and arrow marks? The saved photo is kept.").setPositiveButton("Discard",(d,w)->dismiss()).setNegativeButton("Keep editing",null).show();}
     @Override public void dismiss(){if(!saving){closed=true;super.dismiss();}}
 }

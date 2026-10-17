@@ -22,6 +22,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
     private final Activity activity;private final Store store;private final Store.Group group;private final Listener listener;private final boolean photoOnly;
     private final GLSurfaceView gl;private final TextView status;private final Button capture,done,auto,lightButton;
     final SweepLight light;
+    CaptureLabels labels;
     private final BackgroundRenderer background=new BackgroundRenderer();private final AtomicBoolean requested=new AtomicBoolean(false);
     private final AtomicBoolean analysisPending=new AtomicBoolean(false);
     private Session session;private Anchor origin;private final String sessionId=UUID.randomUUID().toString();
@@ -47,18 +48,30 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
         int pad=Math.round(16*getResources().getDisplayMetrics().density),buttonHeight=Math.round(56*getResources().getDisplayMetrics().density);
         LinearLayout panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);panel.setPadding(pad,pad,pad,pad);panel.setBackgroundColor(0xDF101C19);
         LinearLayout info=new LinearLayout(activity);info.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        TextView shooter=new TextView(activity);shooter.setText("Shooter: "+group.shooter.label());shooter.setTextColor(0xFFD8EB98);shooter.setTextSize(13);info.addView(shooter,new LinearLayout.LayoutParams(0,-2,1));
+        TextView title=new TextView(activity);title.setText(photoOnly?(group.hasData()?"Another view · same grouping":"New grouping"):"Camera sweep");title.setTextColor(0xFFF1F4E7);title.setTextSize(18);info.addView(title,new LinearLayout.LayoutParams(0,-2,1));
         lightButton=new Button(activity);lightButton.setAllCaps(false);lightButton.setTextSize(13);lightButton.setText(light.label());lightButton.setTag("sweep-light");lightButton.setEnabled(light.available);
+        if(activity instanceof MainActivity){MainActivity main=(MainActivity)activity;lightButton.setBackground(main.rounded(MainActivity.PANEL));lightButton.setTextColor(MainActivity.FG);lightButton.setPadding(pad,0,pad,0);}
         info.addView(lightButton,new LinearLayout.LayoutParams(-2,Math.round(48*getResources().getDisplayMetrics().density)));panel.addView(info);
         lightButton.setOnClickListener(v->{if(closed||finishing)return;new android.app.AlertDialog.Builder(activity).setTitle("Continuous flashlight")
             .setSingleChoiceItems(new String[]{"Auto · turn on when the image is too dark","On · keep the light on","Off"},light.mode().ordinal(),(dialog,which)->{light.request(TorchPolicy.Mode.values()[which]);lightButton.setText(light.label());dialog.dismiss();})
             .setNegativeButton("Cancel",null).show();});
-        status=new TextView(activity);status.setTextColor(0xFFF2F6EA);status.setTextSize(16);status.setText("Automatic sweep\nKeep the complete face in view and move slowly sideways. I’ll tell you when there are enough angles.");status.setAccessibilityLiveRegion(android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE);panel.addView(status);
+        if(activity instanceof MainActivity){
+            MainActivity main=(MainActivity)activity;
+            labels=new CaptureLabels(main,()->group,!group.hasData(),(person,practice)->{
+                synchronized(group){
+                    if(closed||finishing||finishRequested||requested.get()||analysisPending.get())return false;
+                    Store.Group changed=Store.copy(group);boolean ownerChanged=!group.shooter.id.equals(person.id);if(ownerChanged)Store.confirmShooter(changed,person);changed.practice=Practice.from(practice.json());
+                    if(group.hasData())store.save(changed);
+                    if(ownerChanged)Store.confirmShooter(group,person);group.practice=changed.practice;group.diskDigest=changed.diskDigest;main.analysis=null;main.undo.clear();return true;
+                }
+            });panel.addView(labels);
+        }
+        status=new TextView(activity);status.setTextColor(0xFFB5C4B7);status.setTextSize(photoOnly?12:16);status.setPadding(0,pad/2,0,pad/2);status.setText("Automatic sweep\nKeep the complete face in view and move slowly sideways. I’ll tell you when there are enough angles.");status.setAccessibilityLiveRegion(android.view.View.ACCESSIBILITY_LIVE_REGION_POLITE);panel.addView(status);
         LinearLayout row=new LinearLayout(activity);capture=new Button(activity);capture.setText("Take photo");capture.setAllCaps(false);auto=new Button(activity);auto.setText("Pause");auto.setAllCaps(false);done=new Button(activity);done.setText("Review now");done.setAllCaps(false);row.addView(capture,new LinearLayout.LayoutParams(0,buttonHeight,1));row.addView(auto,new LinearLayout.LayoutParams(0,buttonHeight,1));row.addView(done,new LinearLayout.LayoutParams(0,buttonHeight,1));panel.addView(row);
         TextView optional=new TextView(activity);optional.setText(photoOnly?"Saved offline · syncs when connected":"Stops automatically · Review now is optional");optional.setTextColor(0xFFB5C4B7);optional.setTextSize(12);panel.addView(optional);
-        capture.setTag("camera-shutter");if(photoOnly){auto.setVisibility(GONE);done.setVisibility(GONE);status.setText("Take a photo of this grouping\nKeep the complete target and arrows in view.");}
+        capture.setTag("camera-shutter");if(photoOnly){auto.setVisibility(GONE);done.setVisibility(GONE);status.setText("Keep the target and all arrows in view");if(activity instanceof MainActivity){MainActivity main=(MainActivity)activity;capture.setBackground(main.rounded(MainActivity.ACCENT));capture.setTextColor(MainActivity.BG);capture.setTextSize(18);capture.setContentDescription("Take photo with the shooter and distance shown above");}}
         LayoutParams p=new LayoutParams(-1,-2,android.view.Gravity.BOTTOM);addView(panel,p);
-        capture.setOnClickListener(v->{if(finishing||finishRequested||analysisPending.get()||count>=SweepPolicy.LIMIT)return;lastCaptureError="";capture.setEnabled(false);requested.set(true);});
+        capture.setOnClickListener(v->{if(finishing||finishRequested||analysisPending.get()||count>=SweepPolicy.LIMIT)return;lastCaptureError="";capture.setEnabled(false);if(labels!=null)labels.setEnabled(false);requested.set(true);});
         auto.setOnClickListener(v->{if(finishing||finishRequested||count>=SweepPolicy.LIMIT)return;automatic=!automatic;lastCaptureError="";auto.setText(automatic?"Pause":"Resume");});
         done.setOnClickListener(v->{if(finishing)return;automatic=false;requested.set(false);finishRequested=true;completionNotice="Stopped early · positions have not passed the stability check";auto.setEnabled(false);capture.setEnabled(false);done.setEnabled(false);gl.queueEvent(()->activity.runOnUiThread(()->{if(!closed&&!analysisPending.get())finish(false);}));});
     }
@@ -68,9 +81,9 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
         if(assessment.ready){completionNotice="Enough angles · positions stable";finish(true);return;}
         if(count>=SweepPolicy.LIMIT){completionNotice="Capture limit reached · positions are still uncertain";finish(false);return;}
         if(finishRequested){finish(false);return;}
-        capture.setEnabled(true);auto.setText(automatic?"Pause":"Resume");analysisPending.set(false);
+        capture.setEnabled(true);auto.setText(automatic?"Pause":"Resume");analysisPending.set(false);if(labels!=null)labels.setEnabled(true);
     }
-    public void analysisFailed(String message){if(closed)return;automatic=false;lastCaptureError="Analysis paused: "+message;auto.setText("Resume");capture.setEnabled(true);analysisPending.set(false);if(finishRequested)finish(false);}
+    public void analysisFailed(String message){if(closed)return;automatic=false;lastCaptureError="Analysis paused: "+message;auto.setText("Resume");capture.setEnabled(true);analysisPending.set(false);if(labels!=null)labels.setEnabled(true);if(finishRequested)finish(false);}
     public String completionNotice(){return completionNotice;}
     private void finish(boolean ready){
         if(closed||finishing)return;finishing=true;automatic=false;requested.set(false);capture.setEnabled(false);auto.setEnabled(false);done.setEnabled(false);
@@ -100,7 +113,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                 if(automatic&&!finishRequested&&tracked&&!analysisPending.get()&&!settled&&keyframes.ready(translation,frame.getTimestamp())){title="Hold steady briefly";advice="Let the phone settle at this angle. I’ll take the photo automatically.";}
                 if(!lightReady&&!finishRequested){title=light.on?"Letting the light settle":"Checking the light";advice="The flashlight turns on automatically if needed. It stays steady while you move.";}
                 String counts=String.format(Locale.US,"%d photos · %d useful angles · %.0f° span",count,a.angles,a.spanDegrees)+(a.arrows>0?" · "+a.stableArrows+" / "+a.arrows+" stable entries":"");
-                final String text=photoOnly?(lastCaptureError.isEmpty()?(analysisPending.get()?"Saving photo…":!lightReady?"Checking the light…":"Take a photo of this grouping\nKeep the complete target and arrows in view."):lastCaptureError):title+"\n"+advice+"\n"+counts,lightText=light.label();activity.runOnUiThread(()->{if(!closed&&!finishing){if(!text.contentEquals(status.getText()))status.setText(text);if(!lightText.contentEquals(lightButton.getText()))lightButton.setText(lightText);}});}
+                final String text=photoOnly?(lastCaptureError.isEmpty()?(analysisPending.get()?"Saving photo…":!lightReady?"Checking the light…":"Keep the target and all arrows in view"):lastCaptureError):title+"\n"+advice+"\n"+counts,lightText=light.label();activity.runOnUiThread(()->{if(!closed&&!finishing){if(!text.contentEquals(status.getText()))status.setText(text);if(!lightText.contentEquals(lightButton.getText()))lightButton.setText(lightText);}});}
             boolean autoFrame=automatic&&!finishing&&!finishRequested&&lightReady&&tracked&&settled&&count<SweepPolicy.LIMIT&&keyframes.ready(translation,frame.getTimestamp());
             if(!finishing&&!finishRequested&&!analysisPending.get()&&(requested.get()||autoFrame)&&analysisPending.compareAndSet(false,true)){
                 requested.set(false);
@@ -123,7 +136,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
                     Bitmap raw=bitmap(image),rotated=raw;
                     if(view.rotation!=0){android.graphics.Matrix m=new android.graphics.Matrix();m.postRotate(view.rotation);rotated=Bitmap.createBitmap(raw,0,0,raw.getWidth(),raw.getHeight(),m,true);}
                     Store.Group snapshot;
-                    try{store.saveBitmap(group,view,rotated);group.views.add(view);store.save(group);count++;if(tracked&&keyframes.ready(translation,frame.getTimestamp()))keyframes.captured(translation,frame.getTimestamp());snapshot=Store.Group.from(group.json());}finally{if(rotated!=raw)rotated.recycle();raw.recycle();}
+                    try{synchronized(group){store.saveBitmap(group,view,rotated);group.views.add(view);try{store.save(group);}catch(Exception failure){group.views.remove(view);throw failure;}if(group.views.size()==1&&activity instanceof MainActivity)((MainActivity)activity).shooters.captured(group);count++;if(tracked&&keyframes.ready(translation,frame.getTimestamp()))keyframes.captured(translation,frame.getTimestamp());snapshot=Store.Group.from(group.json());}}finally{if(rotated!=raw)rotated.recycle();raw.recycle();}
                     final boolean hadTracking=tracked;
                     activity.runOnUiThread(()->{if(!closed){capture.setEnabled(false);listener.captured(snapshot);if(!hadTracking&&!photoOnly)Toast.makeText(activity,"Photo saved without motion tracking. It cannot supply measured sweep angles.",Toast.LENGTH_LONG).show();}});
                 }catch(NotYetAvailableException e){analysisPending.set(false);throw new IllegalStateException("Camera frame is not ready; try once more");}
@@ -131,7 +144,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
             }
         }catch(Exception e){error(e);}
     }
-    private void error(Exception e){lastCaptureError=e.getMessage()==null?e.toString():e.getMessage();android.util.Log.e("RedwoodArrows","Camera operation failed",e);automatic=false;requested.set(false);activity.runOnUiThread(()->{if(!closed){if(!analysisPending.get())capture.setEnabled(true);done.setEnabled(true);auto.setText("Resume");listener.error(lastCaptureError);if(finishRequested&&!analysisPending.get())finish(false);}});}
+    private void error(Exception e){lastCaptureError=e.getMessage()==null?e.toString():e.getMessage();android.util.Log.e("RedwoodArrows","Camera operation failed",e);automatic=false;requested.set(false);activity.runOnUiThread(()->{if(!closed){if(!analysisPending.get()){capture.setEnabled(true);if(labels!=null)labels.setEnabled(true);}done.setEnabled(true);auto.setText("Resume");listener.error(lastCaptureError);if(finishRequested&&!analysisPending.get())finish(false);}});}
     static Bitmap bitmap(Image image){int w=image.getWidth(),h=image.getHeight();int[] pixels=new int[w*h];Image.Plane[] p=image.getPlanes();ByteBuffer y=p[0].getBuffer(),u=p[1].getBuffer(),v=p[2].getBuffer();int yo=y.position(),uo=u.position(),vo=v.position();
         for(int j=0;j<h;j++)for(int i=0;i<w;i++){int yy=(y.get(yo+j*p[0].getRowStride()+i*p[0].getPixelStride())&255)-16;int uu=(u.get(uo+(j/2)*p[1].getRowStride()+(i/2)*p[1].getPixelStride())&255)-128;int vv=(v.get(vo+(j/2)*p[2].getRowStride()+(i/2)*p[2].getPixelStride())&255)-128;int r=(298*yy+409*vv+128)>>8,g=(298*yy-100*uu-208*vv+128)>>8,b=(298*yy+516*uu+128)>>8;pixels[j*w+i]=0xFF000000|(clamp(r)<<16)|(clamp(g)<<8)|clamp(b);}
         return Bitmap.createBitmap(pixels,w,h,Bitmap.Config.ARGB_8888);

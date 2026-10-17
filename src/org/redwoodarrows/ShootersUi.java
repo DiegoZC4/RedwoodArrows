@@ -30,23 +30,27 @@ final class ShootersUi {
     }
     boolean selectActive(String id){
         if(a.busy)return false;
-        try{ShooterRoster copy=roster.copy();copy.select(id);return commit(copy);}catch(Exception e){a.message(e.getMessage());return false;}
+        try{ShooterRoster copy=roster.copy();copy.select(id);if(!commit(copy))return false;return preferences.edit().putString("capture_shooter_override",id).commit();}catch(Exception e){a.message(e.getMessage());return false;}
     }
+    ShooterRoster.Person next(List<Store.Group> history){return CaptureDefaults.next(roster,history,preferences.contains("capture_shooter_override")?preferences.getString("capture_shooter_override",""):null);}
+    ShooterRoster.Person next(){return next(a.store.list());}
+    void captured(Store.Group group){preferences.edit().remove("capture_shooter_override").remove("practice_next:"+group.shooter.id).apply();}
+    void pickForCapture(Consumer<ShooterRoster.Person> chosen){pick("Who shot this grouping?",ShooterRoster.UNASSIGNED,chosen);}
     void addHomeControls(LinearLayout body){
         a.add(body,a.text("SHOOTING AS",12,MainActivity.MUTED));
         List<ShooterRoster.Person> people=roster.all();
-        if(people.size()==2&&active().assigned()){
-            LinearLayout row=a.row();int current=people.get(0).id.equals(active().id)?0:1;
-            TwoShooterSwitch toggle=new TwoShooterSwitch(a,people.get(0).name,people.get(1).name,current,index->selectActive(people.get(index).id));toggle.setTag("shooter-switch");
+        if(people.size()==2&&next().assigned()){
+            LinearLayout row=a.row();int current=people.get(0).id.equals(next().id)?0:1;
+            TwoShooterSwitch toggle=new TwoShooterSwitch(a,people.get(0).name,people.get(1).name,current,index->{if(!selectActive(people.get(index).id))return false;View range=a.root.findViewWithTag("setup-distance");if(range instanceof Button)((Button)range).setText(PracticeUi.nextLabel(a)+" · setup");return true;});toggle.setTag("shooter-switch");
             row.addView(toggle,new LinearLayout.LayoutParams(0,-2,1));
             Button names=a.button("People",this::chooseActive);names.setContentDescription("Choose or manage shooters");
             LinearLayout.LayoutParams side=new LinearLayout.LayoutParams(a.dp(76),-2);side.setMargins(a.dp(6),0,0,0);row.addView(names,side);a.add(body,row);
         }else{
-            Button choose=a.button(active().label()+" · choose shooter",this::chooseActive);choose.setTag("choose-shooter");a.add(body,choose);
+            Button choose=a.button(next().label()+" · choose shooter",this::chooseActive);choose.setTag("choose-shooter");a.add(body,choose);
             if(people.isEmpty())a.add(body,a.text("Add your names once. Each grouping keeps its shooter when you switch turns.",13,MainActivity.MUTED));
         }
     }
-    void chooseActive(){pick("Shooting as",active(),p->{if(selectActive(p.id))a.refreshShooterLabels();});}
+    void chooseActive(){pick("Shooting as",next(),p->{if(selectActive(p.id))a.refreshShooterLabels();});}
     void chooseForGroup(){pick("Who shot this grouping?",a.group.shooter,a::assignShooter);}
     private void pick(String title,ShooterRoster.Person selected,Consumer<ShooterRoster.Person> chosen){
         if(!loadError.isEmpty()){a.message(loadError);return;}

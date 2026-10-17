@@ -15,6 +15,8 @@ classpath="deps/test/json-20240303.jar:$ANDROID_HOME/platforms/android-34/androi
 "$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.TargetSelectionTest
 "$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.PhotoAssignmentsTest
 "$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.DistanceStepsTest
+"$JAVA_HOME/bin/javac" --release 8 -cp "build/shooter-tests:$classpath" -d build/shooter-tests src/org/redwoodarrows/CaptureDefaults.java tests/CaptureDefaultsTest.java
+"$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.CaptureDefaultsTest
 "$JAVA_HOME/bin/javac" --release 8 -cp "build/shooter-tests:$classpath" -d build/shooter-tests src/org/redwoodarrows/ProgressStats.java src/org/redwoodarrows/ConsistencyStats.java src/org/redwoodarrows/LabelCoverage.java tests/ConsistencyStatsTest.java tests/ConfidenceStatsTest.java tests/BulkLabelsTest.java
 "$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.ConsistencyStatsTest
 "$JAVA_HOME/bin/java" -cp "build/shooter-tests:$classpath" org.redwoodarrows.ConfidenceStatsTest

@@ -7,20 +7,22 @@ import android.widget.*;
 import org.json.JSONObject;
 import java.util.*;
 
-/** One remembered future context; editing old ends never changes it. */
+/** Direct distance controls, with per-shooter defaults for new captures. */
 final class PracticeUi {
-    static Practice next(MainActivity a)throws Exception {String raw=a.getPreferences(0).getString("practice_next","");return raw.isEmpty()?new Practice():Practice.from(new JSONObject(raw)).next();}
+    static Practice forPerson(MainActivity a,ShooterRoster.Person person,List<Store.Group> history)throws Exception {String raw=a.getPreferences(0).getString("practice_next:"+person.id,"");return raw.isEmpty()?CaptureDefaults.previous(person,history):Practice.from(new JSONObject(raw)).next();}
+    static Practice next(MainActivity a)throws Exception {List<Store.Group> history=a.store.list();return forPerson(a,a.shooters.next(history),history);}
     static String nextLabel(MainActivity a){try{return next(a).label();}catch(Exception e){return "Check distance setting";}}
     static void nextDialog(MainActivity a){try{show(a,null,next(a),()->{if(a.page.equals("capture-setup"))a.captureSetup();else a.home();});}catch(Exception e){a.message("Saved range settings could not be read; they have been preserved. "+e.getMessage());}}
     static void groupDialog(MainActivity a,Store.Group g){show(a,g,g.practice,()->a.results());}
     static View inline(MainActivity a,Store.Group g,String caption,Runnable saved){
         try{
-            Practice source=g==null?next(a):g.practice;final DistanceControl[] control=new DistanceControl[1];
+            List<Store.Group> history=g==null?a.store.list():Collections.emptyList();ShooterRoster.Person person=g==null?a.shooters.next(history):g.shooter;
+            Practice source=g==null?forPerson(a,person,history):g.practice;final DistanceControl[] control=new DistanceControl[1];
             control[0]=new DistanceControl(a,source.meters,source.unit,!source.arrowMeters.isEmpty(),caption,(meters,unit)->{
                 if(a.busy)return false;
                 try{
-                    Practice p=g==null?next(a):Practice.from(g.practice.json());p.meters=meters;p.unit=unit;
-                    if(g==null){if(!a.getPreferences(0).edit().putString("practice_next",p.json().toString()).commit())throw new IllegalStateException("Could not save next distance");}
+                    Practice p=g==null?source.next():Practice.from(g.practice.json());p.meters=meters;p.unit=unit;
+                    if(g==null){if(!a.getPreferences(0).edit().putString("practice_next:"+person.id,p.json().toString()).commit())throw new IllegalStateException("Could not save next distance");}
                     else{Store.Group changed=a.store.updatePractice(g,p);g.practice=changed.practice;g.diskDigest=changed.diskDigest;if(a.group!=null&&a.group.id.equals(g.id)){a.group=g;a.undo.clear();a.analysis=null;}}
                     if(saved!=null)saved.run();return true;
                 }catch(Exception e){a.message("Could not save distance: "+e.getMessage());return false;}
@@ -42,6 +44,7 @@ final class PracticeUi {
         TextView title=a.text(label,12,MainActivity.MUTED);body.addView(title);EditText input=new EditText(a);input.setTextColor(MainActivity.FG);input.setHintTextColor(MainActivity.MUTED);input.setSingleLine(true);input.setInputType(numeric?InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL:InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);input.setText(value);input.setTag(tag);input.setContentDescription(label);body.addView(input,new LinearLayout.LayoutParams(-1,a.dp(48)));return input;
     }
     static AlertDialog show(MainActivity a,Store.Group g,Practice source,Runnable done){
+        final String futureKey=g==null?"practice_next:"+a.shooters.next().id:"";
         LinearLayout body=new LinearLayout(a);body.setOrientation(1);body.setPadding(a.dp(18),a.dp(8),a.dp(18),a.dp(12));body.setBackgroundColor(MainActivity.BG);ScrollView scroll=new ScrollView(a);scroll.addView(body);
         String[] unit={source.unit};EditText distance=field(a,body,"Marked shooting distance · blank = unknown",Practice.distance(source.meters)?number(Practice.fromMeters(source.meters,unit[0])):"","practice-distance",true);
         Map<Integer,EditText> perArrow=new LinkedHashMap<>();
@@ -70,7 +73,7 @@ final class PracticeUi {
         AlertDialog dialog=new AlertDialog.Builder(a).setTitle(g==null?"Next shooting distance":"Distance & shot check").setView(scroll).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{
             Practice p=new Practice();p.meters=parseDistance(distance,unit[0]);p.unit=unit[0];p.setup=setup.getText().toString().trim();p.validate();
-            if(g==null){if(!a.getPreferences(0).edit().putString("practice_next",p.json().toString()).commit())throw new IllegalStateException("Could not save range settings");}
+            if(g==null){if(!a.getPreferences(0).edit().putString(futureKey,p.json().toString()).commit())throw new IllegalStateException("Could not save range settings");}
             else{p.fired=count(firedInput);p.misses=count(missInput);for(Map.Entry<Integer,EditText> e:perArrow.entrySet()){double meters=parseDistance(e.getValue(),unit[0]);if(Practice.distance(meters))p.arrowMeters.put(e.getKey(),meters);}p.validateCounts(g);if(reviewed.isChecked())p.markChecked(g);a.group=a.store.updatePractice(g,p);a.undo.clear();a.analysis=null;}
             dialog.dismiss();done.run();
         }catch(Exception e){error.setText(e instanceof NumberFormatException?"Use numbers for distance and whole numbers for arrow counts.":e.getMessage());}}));dialog.show();return dialog;
