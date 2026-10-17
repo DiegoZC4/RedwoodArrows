@@ -25,7 +25,6 @@ final class QuickCapture {
         LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(0,-2,.8f);rp.setMargins(a.dp(6),0,0,0);context.addView(range,rp);refreshDistance.run();a.add(a.root,context);
         LinearLayout actions=a.row();Button photo=a.button("Take photo",()->a.takePhoto(false));photo.setTag("quick-photo");photo.setContentDescription("Take a photo of a new grouping. Save on this phone and sync automatically when connected.");photo.setBackground(a.rounded(MainActivity.ACCENT));photo.setTextColor(MainActivity.BG);
         Button add=a.button("Add photos",()->a.addPhotos(false));add.setTag("quick-import");add.setContentDescription("Add camera-roll photos of one grouping. Originals stay untouched.");
-        Button scan=a.button("Sweep",a::quickCapture);scan.setTag("quick-scan");scan.setContentDescription("Automatic moving-phone sweep with arrow analysis");
-        for(Button button:new Button[]{photo,add,scan}){button.setTextSize(13);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,a.dp(48),1);p.setMargins(a.dp(2),0,a.dp(2),0);actions.addView(button,p);}a.add(a.root,actions);
+        for(Button button:new Button[]{photo,add}){button.setTextSize(15);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,a.dp(52),1);p.setMargins(a.dp(2),0,a.dp(2),0);actions.addView(button,p);}a.add(a.root,actions);
     }
 }

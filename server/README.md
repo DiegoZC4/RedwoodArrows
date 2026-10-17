@@ -81,8 +81,10 @@ personal beta includes third-party target previews and noncommercial weights.
 Group records retain the complete saved JSON: stable IDs, target geometry,
 calibration, shooter, annotations, per-arrow positions, practice data and view
 metadata. Photo blobs are content-addressed SHA-256 JPEGs (maximum 8 MiB,
-4096×4096); source camera-roll files are never uploaded directly. The app uploads
-its existing resized private JPEG copies. Each grouping permits up to 64 views
+4096×4096). In-app capture uploads the untouched, size-bounded camera JPEG;
+viewers apply its EXIF orientation without modifying the blob. Camera-roll
+imports upload resized private copies, never the source files directly.
+Each grouping permits up to 64 views
 and 1 MiB of JSON; the private image library is capped at 2 GiB. A full library
 returns an explicit failure and leaves captures queued safely on the phone.
 

@@ -10,14 +10,14 @@ final class CaptureLabels extends LinearLayout {
     interface Change {boolean save(ShooterRoster.Person person,Practice practice)throws Exception;}
     final MainActivity a;final Supplier<Store.Group> source;final Change change;
     final boolean recall;final List<Store.Group> history;final Map<String,Practice> edited=new HashMap<>();
-    final LinearLayout distanceSlot;ShooterPager shooter;DistanceControl distance;Button add;
+    final LinearLayout distanceSlot;ShooterPager shooter;DistanceControl distance;
     CaptureLabels(MainActivity a,Supplier<Store.Group> source,boolean recall,Change change){
         super(a);this.a=a;this.source=source;this.recall=recall;this.change=change;history=a.store.list();
         setOrientation(HORIZONTAL);setTag("capture-labels");
         LinearLayout names=column("SHOOTER");distanceSlot=column("DISTANCE");
         LinearLayout.LayoutParams left=new LinearLayout.LayoutParams(0,-2,1.3f);left.setMargins(0,0,a.dp(8),0);addView(names,left);addView(distanceSlot,new LinearLayout.LayoutParams(0,-2,1));
         if(a.shooters.roster.all().isEmpty()){
-            add=a.button("Add shooter",()->a.shooters.pickForCapture(person->{if(person.assigned()&&select(person)){names.removeView(add);names.addView(pager(),new LinearLayout.LayoutParams(-1,a.dp(48)));}}));add.setTag("capture-shooter");names.addView(add,new LinearLayout.LayoutParams(-1,a.dp(48)));
+            TextView empty=a.text("More → People",14,MainActivity.MUTED);empty.setTag("capture-shooter");empty.setContentDescription("Add names in More, People, then reopen the camera");names.addView(empty,new LinearLayout.LayoutParams(-1,a.dp(48)));
         }else names.addView(pager(),new LinearLayout.LayoutParams(-1,a.dp(48)));
         refreshDistance();
     }
@@ -41,5 +41,5 @@ final class CaptureLabels extends LinearLayout {
             }catch(Exception e){a.message("Could not change distance: "+e.getMessage());return false;}
         },()->PracticeUi.distanceDialog(a,distance));distance.setTag("capture-distance");distance.setEnabled(isEnabled());distanceSlot.addView(distance,new LinearLayout.LayoutParams(-1,a.dp(48)));
     }
-    @Override public void setEnabled(boolean enabled){super.setEnabled(enabled);if(shooter!=null)shooter.setEnabled(enabled);if(add!=null)add.setEnabled(enabled);if(distance!=null)distance.setEnabled(enabled);}
+    @Override public void setEnabled(boolean enabled){super.setEnabled(enabled);if(shooter!=null)shooter.setEnabled(enabled);if(distance!=null)distance.setEnabled(enabled);}
 }

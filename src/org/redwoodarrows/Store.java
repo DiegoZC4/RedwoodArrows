@@ -236,7 +236,41 @@ public final class Store {
     public List<Group> list(){List<Group> groups=new ArrayList<>();File[] dirs=root.listFiles();if(dirs!=null)for(File d:dirs){try{groups.add(read(new File(d,"group.json")));}catch(Exception ignored){}}
         Collections.sort(groups,(a,b)->Long.compare(b.created,a.created));return groups;}
     Group read(File file)throws Exception {synchronized(FILE_LOCK){byte[] bytes;try(InputStream in=new FileInputStream(file)){bytes=SyncFiles.bytes(in,SyncFiles.JSON_LIMIT);}Group g=Group.from(new JSONObject(new String(bytes,StandardCharsets.UTF_8)));g.diskDigest=SyncFiles.hash(bytes);return g;}}
-    public Bitmap bitmap(Group g,View v){return BitmapFactory.decodeFile(new File(directory(g),v.file).getAbsolutePath());}
+    public Bitmap bitmap(Group g,View v){File file=new File(directory(g),v.file);return orientPhoto(BitmapFactory.decodeFile(file.getAbsolutePath()),file);}
+    /** Display orientation only. Never rewrite the captured JPEG or bake in marks. */
+    static Bitmap orientPhoto(Bitmap image,File file){
+        if(image==null)return null;int orientation=1;
+        try{orientation=new ExifInterface(file.getPath()).getAttributeInt(ExifInterface.TAG_ORIENTATION,1);}catch(IOException ignored){}
+        Matrix m=new Matrix();switch(orientation){case 2:m.setScale(-1,1);break;case 3:m.setRotate(180);break;case 4:m.setScale(1,-1);break;case 5:m.setRotate(90);m.postScale(-1,1);break;case 6:m.setRotate(90);break;case 7:m.setRotate(270);m.postScale(-1,1);break;case 8:m.setRotate(270);break;}
+        if(m.isIdentity())return image;Bitmap upright=Bitmap.createBitmap(image,0,0,image.getWidth(),image.getHeight(),m,true);if(upright!=image)image.recycle();return upright;
+    }
+    /** Image-first transaction: a visible saved round always has its original JPEG.
+     * The passed shutter snapshot is not mutated, and analysis is never required. */
+    Group saveCameraPhoto(Group shutter,byte[] jpeg,long capturedAt,long cameraTimestamp)throws Exception {
+        if(!shutter.shooter.assigned()||!Double.isFinite(shutter.practice.meters)||shutter.practice.meters<=0)throw new IOException("Choose shooter and distance before taking a photo");
+        if(shutter.coordinatesOnly()||!shutter.keepPhotos||shutter.views.size()>=64)throw new IOException("Start a new photo grouping");
+        if(jpeg==null||jpeg.length<4||jpeg.length>SyncFiles.PHOTO_LIMIT||(jpeg[0]&255)!=255||(jpeg[1]&255)!=216)throw new IOException("Camera photo is missing or exceeds the 8 MB sync limit");
+        BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;BitmapFactory.decodeByteArray(jpeg,0,jpeg.length,bounds);
+        if(bounds.outWidth<=0||bounds.outHeight<=0||bounds.outWidth>SyncFiles.PHOTO_MAX_DIMENSION||bounds.outHeight>SyncFiles.PHOTO_MAX_DIMENSION||(long)bounds.outWidth*bounds.outHeight>16_000_000L)throw new IOException("Camera returned an unreadable or oversized photo");
+        int orientation=new ExifInterface(new ByteArrayInputStream(jpeg)).getAttributeInt(ExifInterface.TAG_ORIENTATION,1);
+        View view=new View();view.file=view.id+".jpg";view.sourceHash=SyncFiles.hash(jpeg);view.capturedAt=capturedAt;view.cameraTimestamp=cameraTimestamp;
+        view.rawWidth=bounds.outWidth;view.rawHeight=bounds.outHeight;boolean swap=orientation>=5&&orientation<=8;view.width=swap?bounds.outHeight:bounds.outWidth;view.height=swap?bounds.outWidth:bounds.outHeight;
+        Group saved=copy(shutter);if(!saved.hasData())saved.created=capturedAt;saved.views.add(view);
+        synchronized(FILE_LOCK){
+            File photo=new File(directory(saved),view.file);if(photo.exists())throw new IOException("Camera photo identity collision");
+            try{SyncFiles.atomic(photo,jpeg);save(saved);}
+            catch(Exception failure){
+                // A notification failure after the manifest commit must not remove
+                // an image that the saved round already references.
+                File manifest=new File(directory(saved),"group.json");
+                if(manifest.isFile())try{Group committed=read(manifest);for(View v:committed.views)if(v.id.equals(view.id)&&v.sourceHash.equals(view.sourceHash))return committed;}catch(Exception ignored){}
+                if(photo.exists()&&!photo.delete())android.util.Log.w("RedwoodArrows","Uncommitted camera photo retained for recovery");
+                File partial=new File(photo.getPath()+".new");if(partial.exists()&&!partial.delete())android.util.Log.w("RedwoodArrows","Incomplete camera photo retained");
+                throw failure;
+            }
+        }
+        return saved;
+    }
     public View importPhoto(Context c,Group g,Uri uri)throws Exception {
         if(g.coordinatesOnly())throw new IOException("Cannot add photos to a completed coordinates-only grouping");
         File temporary=File.createTempFile("selected-photo-",".image",c.getCacheDir());Bitmap b=null;

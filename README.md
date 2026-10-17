@@ -23,7 +23,8 @@ phone first. Optional authenticated sync shares the same private library on
 diegozc.com. Signing in does not assign the photographed end to that account:
 choose the actual shooter separately.
 
-**Take photo** opens the in-app camera with the existing automatic continuous
+**Take photo** opens an ordinary in-app camera; it does not require ARCore,
+motion tracking, a sweep, or arrow detection. It includes an automatic continuous
 flashlight. Shooter and distance are editable directly above the shutter: tap or
 swipe the name to change person; swipe distance, or tap for exact entry. New
 groupings automatically suggest the next saved person in turn and that person's
@@ -31,11 +32,21 @@ last distance. With two people this alternates; one person repeats. Cancelled
 captures and extra views of the same grouping do not consume a turn. You can
 override the suggestion for solo rounds. Unknown or mixed walk-up distances stay
 blank. These defaults work offline from the saved library and survive restart.
-One shutter tap saves the photo and opens **Arrows → targets**; no
-sweep, arrow labels or review is required to sync the photo. Arrow-dot suggestions
-start automatically on the saved photo, locally and offline; capture never waits
-for them. Correct mistakes and assign targets, then Save. Shooter and distance
-can also be corrected in this review; Save commits them with the annotations.
+Set both labels, then one shutter tap saves the untouched camera JPEG and labels
+offline. **Photo saved** shows the image and editable labels, with **Next grouping**
+and **Another view** (same grouping). There is no annotation or detection step to
+complete. People are managed separately under **More → People**; capturing only
+selects an existing name. The camera requests a high-quality image around 4 MP
+(device-dependent), not sensor RAW/DNG or the phone's maximum sensor resolution.
+JPEG bytes are kept unchanged; EXIF orientation is applied only for display and
+analysis. No GPS location is requested. A saved-photo receipt appears only after
+both image and grouping manifest are committed on the phone.
+
+**Review arrows** is optional. Opening it on an unmarked photo starts dot
+suggestions automatically, locally and offline. Correct mistakes and assign
+targets, then Save. Shooter and distance can also be corrected in this review;
+Save commits them with the annotations. Neither annotations nor label changes
+rewrite the original JPEG.
 **Add photos** opens Android's
 photo picker directly (with a Files fallback), without whole-library access.
 Select up to 12 views of the **same unchanged grouping** at once. For another
@@ -50,7 +61,7 @@ of the **2D only** preference for new analyzed sweeps. Existing 2D-only grouping
 are not converted or altered. Signed-in phones queue saved photos offline and
 sync when connected, including groupings with no arrow positions yet. The newly
 imported photo opened in the editor also gets automatic suggestions. The ordinary
-moving-phone **Sweep** remains available; detailed capture options are under
+moving-phone **Sweep** remains available under
 **More → New grouping options**. Photos of different physical ends should not be
 selected as one grouping; sync does not infer that they are the same end.
 
@@ -72,7 +83,7 @@ Photos, coordinates and per-arrow walk-up distances are untouched. If a selected
 round changes elsewhere while the editor is open, the batch stops without
 overwriting it; reopen the selection to use the current data.
 
-In **Arrows → targets**, dots appear automatically after capture. Use **Add** for
+In **Arrows → targets**, dots appear automatically when first reviewing a photo. Use **Add** for
 missed shaft-entry centers (drag dots to refine), and **Remove** for false positives.
 **Retry dots** is only a fallback. Reopening a saved photo does not rerun detection
 or resurrect removed dots, and late results cannot overwrite edits made while

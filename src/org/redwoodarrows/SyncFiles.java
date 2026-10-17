@@ -6,9 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 
-/** Bounded, deterministic wire format; no device paths, EXIF originals or secrets. */
+/** Bounded wire format; no device paths or secrets. Camera JPEG bytes stay intact. */
 final class SyncFiles {
-    static final int JSON_LIMIT=2*1024*1024,PHOTO_LIMIT=8*1024*1024;
+    static final int JSON_LIMIT=2*1024*1024,PHOTO_LIMIT=8*1024*1024,PHOTO_MAX_DIMENSION=4096;
     static String id(String value)throws IOException {if(value==null||!value.matches("[A-Za-z0-9_-]{1,80}"))throw new IOException("Invalid grouping ID");return value;}
     static String photo(String value)throws IOException {if(value==null||!value.matches("[A-Za-z0-9_-]{1,80}\\.jpg"))throw new IOException("Invalid photo name");return value;}
     static String hash(byte[] data)throws Exception {return hex(MessageDigest.getInstance("SHA-256").digest(data));}

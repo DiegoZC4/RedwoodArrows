@@ -61,7 +61,7 @@ final class GroupImages {
             if(bounds.outWidth<=0||bounds.outHeight<=0)return new Picture(null,"Photo missing");
             BitmapFactory.Options options=new BitmapFactory.Options();options.inSampleSize=1;
             int limit=kind==WARPED?2048:maxSize;while(Math.max(bounds.outWidth,bounds.outHeight)/options.inSampleSize>limit)options.inSampleSize*=2;
-            original=BitmapFactory.decodeFile(file.getAbsolutePath(),options);if(original==null)return new Picture(null,"Photo unavailable");
+            original=Store.orientPhoto(BitmapFactory.decodeFile(file.getAbsolutePath(),options),file);if(original==null)return new Picture(null,"Photo unavailable");
             if(kind==WARPED)return new Picture(warpWithFit(original,v,g.preset(),maxSize,extent(g)),"");
             Bitmap retained=original;original=null;return new Picture(retained,"");
         }catch(RuntimeException e){return new Picture(null,"Preview unavailable");}finally{if(original!=null)original.recycle();}
