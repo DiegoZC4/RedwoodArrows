@@ -73,8 +73,10 @@ target alignment in other photos is excluded until confirmed again; its pixel
 marks remain available. Unselected arrows retain their existing alignments.
 
 **Progress** now opens an offline shooter-comparison graph with separate colored
-lines/markers. Tap **All ranges**, **10 yd**, **15 yd**, or another saved distance
-directly; choose **Daily**, rolling **30 arrows**, or rolling **100 arrows**.
+markers and approximate **95% confidence intervals** on daily points. Tap
+**All ranges**, **10 yd**, **15 yd**, or another saved distance directly.
+**Daily / Daily + 100** toggles the optional 100-arrow trend without hiding the
+daily points. Tap anywhere on that capsule to toggle, including its selected half.
 Tap/scrub the graph or use its previous/next arrows for per-shooter values and
 coverage. **Details** retains the individual shot plot and older progress tools.
 The comparison refreshes when shared labels/positions sync, without changing data.
@@ -84,12 +86,27 @@ each arrow is normalized by its entered distance, then squared deviations from
 each round's center are pooled with denominator sum(n−1). It is not standard
 error, full group diameter, or bullseye accuracy. All ranges averages the per-range
 variances equally; line segments break when the represented range mix changes.
-Fixed-distance filtering is best for like-for-like comparisons. Rolling windows
-retain whole rounds and overlap. Unknown distances, provisional owners and
+Fixed-distance filtering is best for like-for-like comparisons. The trend uses
+the last approximately 100 recorded arrows at each shooting day's end, retains
+whole rounds and omits incomplete windows. Its windows overlap and are not
+independent evidence of improvement. Unknown distances, provisional owners and
 mixed-distance walk-up rounds are excluded; missing positions/misses are counted
-but never placed at zero. Hollow dots indicate a small sample or an unfinished
-rolling window. Equipment/review filters are under **Filters**. With only one
+but never placed at zero. Equipment/review filters are under **Filters**. With only one
 dated session the Daily graph correctly shows points, not an invented trend.
+
+The intervals resample whole usable rounds 4,096 times, separately within each
+distance, retaining equal distance weights in variance. They are the 2.5th and
+97.5th percentiles of the resampled SD estimates, not the spread of individual
+arrows. At least **10 usable rounds at each included distance** are required;
+otherwise a hollow provisional point says **Insufficient data for 95% CI**.
+Rounds with fewer than two located arrows do not establish spread. No observed
+between-round variation also withholds the interval rather than asserting zero
+uncertainty. The minimum is a guardrail, not a guarantee of statistical coverage.
+Intervals assume comparable independent rounds and exclude systematic photo
+calibration error, missing impacts and persistent between-round dependence.
+Computation is offline, repeatable and off the UI thread. More observations can
+narrow the uncertainty without automatically lowering the SD. Corrections from
+sync refresh the estimate; existing sign-in and groupings are unchanged.
 
 ## Try it
 
