@@ -25,7 +25,7 @@ public final class ConsistencyStatsTest {
         near(first(stats(unequal,9.144,0),0).spread,Math.sqrt(12),"10 yard distance filter");near(first(stats(unequal,13.716,0),0).spread,Math.sqrt(48),"15 yard distance filter");
         s=stats(Arrays.asList(a,a),Double.NaN,0);check(first(s,0).located==4,"Repeated grouping ID deduplicated");
         Store.Group missing=end(A,1,9.144,3,4);missing.practice.meters=Double.NaN;
-        s=stats(Arrays.asList(a,missing),Double.NaN,0);check(s.missingDistance==1&&s.times.size()==1,"Unknown distances never become zero/tight history");
+        s=stats(Arrays.asList(a,missing),Double.NaN,0);check(s.missingDistance==1&&s.times.size()==2&&s.at(s.series.get(0),s.latest())==null,"Unknown-distance day visible, never a zero/tight measurement");
         Store.Group mixed=end(A,0,9.144,3,4);mixed.practice.arrowMeters.put(1,13.716);s=stats(Arrays.asList(a,mixed),Double.NaN,0);check(s.mixedDistance==1&&first(s,0).ends.size()==1,"Walk-ups do not pollute equal-distance comparison");
         Store.Group overrides=end(A,0,9.144,3,4);for(int i=1;i<=4;i++)overrides.practice.arrowMeters.put(i,9.144);overrides.practice.meters=Double.NaN;
         near(first(stats(Arrays.asList(overrides),9.144,0),0).spread,Math.sqrt(12),"Known uniform arrow overrides supported");

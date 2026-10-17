@@ -74,12 +74,15 @@ final class ConsistencyStats {
     }
     final List<Series> series=new ArrayList<>();final SortedSet<Long> times=new TreeSet<>();
     final SortedSet<Long> distanceChoices=new TreeSet<>();final SortedSet<String> setups=new TreeSet<>();
+    final SortedMap<Long,LabelCoverage.Day> labelDays;
     final int mode;final double distance;int missingDistance,mixedDistance,unchecked,unconfirmed,unsupported;
     ConsistencyStats(List<Store.Group> groups,List<ShooterRoster.Person> people,String setup,boolean checkedOnly,double distance,int mode){
         if(mode!=DAILY&&mode!=ROLLING_30&&mode!=ROLLING_100)throw new IllegalArgumentException("Unknown comparison window");
         this.mode=mode;this.distance=distance;
+        labelDays=LabelCoverage.days(groups,setup,distance);
+        if(mode==DAILY)for(LabelCoverage.Day day:labelDays.values())if(!day.pending.isEmpty())times.add(day.time);
         Set<String> owners=new HashSet<>();for(ShooterRoster.Person p:people)if(p.assigned())owners.add(p.id);
-        for(Store.Group g:groups)if(g.hasData()&&owners.contains(g.shooter.id)){
+        for(Store.Group g:groups)if(g.hasData()){
             setups.add(g.practice.setup);
             if(g.practice.setup.equals(setup)&&g.preset().circular()){double d=uniformDistance(g);if(Practice.distance(d))distanceChoices.add(rangeKey(d));}
         }

@@ -52,6 +52,15 @@ base distance. Vertical swipes still scroll the gallery. Walk-up overrides and
 all saved coordinates remain intact. The next-end distance is remembered
 separately; correcting an old end never changes it.
 
+To label several rounds, choose a day in the gallery and tap **Select** (or hold
+a round). Tap thumbnails to include/exclude them, **All** for the whole day, or
+**1,3,5… / 2,4,6…** for alternating rounds in chronological order. **Label selected
+rounds** opens one sheet: choose shooter, distance, or both, then Apply. Changes
+save offline and sync normally; **Undo labels** restores the previous values.
+Photos, coordinates and per-arrow walk-up distances are untouched. If a selected
+round changes elsewhere while the editor is open, the batch stops without
+overwriting it; reopen the selection to use the current data.
+
 In **Arrows → targets**, dots appear automatically after capture. Use **Add** for
 missed shaft-entry centers (drag dots to refine), and **Remove** for false positives.
 **Retry dots** is only a fallback. Reopening a saved photo does not rerun detection
@@ -89,8 +98,10 @@ variances equally; line segments break when the represented range mix changes.
 Fixed-distance filtering is best for like-for-like comparisons. The trend uses
 the last approximately 100 recorded arrows at each shooting day's end, retains
 whole rounds and omits incomplete windows. Its windows overlap and are not
-independent evidence of improvement. Unknown distances, provisional owners and
-mixed-distance walk-up rounds are excluded; missing positions/misses are counted
+independent evidence of improvement. Days with unknown distances or provisional
+owners stay visible with an amber **?** and a **Label rounds** shortcut, but no
+invented numerical point. Mixed-distance walk-up rounds are excluded from this
+comparison; missing positions/misses are counted
 but never placed at zero. Equipment/review filters are under **Filters**. With only one
 dated session the Daily graph correctly shows points, not an invented trend.
 

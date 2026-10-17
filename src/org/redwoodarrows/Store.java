@@ -19,7 +19,7 @@ public final class Store {
     static void changed(){Runnable listener=onChanged;if(listener!=null)listener.run();}
     final File root;
     public Store(Context c){this(c.getFilesDir());}
-    Store(File appFiles){root=new File(appFiles,"groups");root.mkdirs();}
+    Store(File appFiles){root=new File(appFiles,"groups");root.mkdirs();try{BulkLabels.recover(this);}catch(Exception e){throw new IllegalStateException("Interrupted label edit needs recovery; saved versions are preserved",e);}}
     public static JSONArray array(double[] d)throws JSONException {JSONArray a=new JSONArray();for(double v:d)a.put(Double.isFinite(v)?v:0);return a;}
     public static double[] doubles(JSONArray a){if(a==null)return null;double[] d=new double[a.length()];for(int i=0;i<d.length;i++)d[i]=a.optDouble(i);return d;}
     public static final class Observation {

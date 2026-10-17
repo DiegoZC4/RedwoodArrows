@@ -17,6 +17,7 @@ final class ConsistencyChart extends View {
     void select(long time){selected=time;StringBuilder text=new StringBuilder("Angular grouping consistency, milliradians. Lower is tighter. ");
         if(data.times.isEmpty())text.append("No known-distance measurements.");else{text.append(new SimpleDateFormat("MMM d, yyyy",Locale.US).format(new Date(time))).append(". ");for(ConsistencyStats.Series series:data.series){ConsistencyStats.Sample sample=data.at(series,time);text.append(series.person.label()).append(": ").append(sample==null?"no data":ProgressUi.fmt(sample.spread)+" milliradians, "+sample.located+" located arrows. "+ConsistencyUi.intervalLabel(sample)).append(". ");}}
         if(showTrend)text.append("100-arrow rolling trend shown; windows overlap. ");
+        LabelCoverage.Day coverage=data.labelDays.get(time);if(coverage!=null&&!coverage.pending.isEmpty())text.append(coverage.summary()).append(". No angular value invented. ");
         setContentDescription(text+" Swipe horizontally or use previous/next to inspect time.");invalidate();}
     void showTrend(boolean value){showTrend=value;select(selected);}
     float left(){return 43*density;}float right(){return Math.max(left()+1,getWidth()-18*density);}float top(){return 32*density;}float bottom(){return Math.max(top()+1,getHeight()-38*density);}
@@ -59,12 +60,13 @@ final class ConsistencyChart extends View {
             }
         }
         p.setPathEffect(null);p.setStyle(Paint.Style.FILL);p.setColor(MainActivity.MUTED);p.setTextSize(11*scaled);
+        if(data.mode==ConsistencyStats.DAILY){p.setTextAlign(Paint.Align.CENTER);p.setColor(0xFFFFBE91);for(LabelCoverage.Day day:data.labelDays.values())if(!day.pending.isEmpty())c.drawText("?",x(day.time),b+13*density,p);p.setColor(MainActivity.MUTED);}
         if(!data.times.isEmpty()){
             boolean oneDay=ConsistencyStats.day(data.times.first())==ConsistencyStats.day(data.times.last());SimpleDateFormat label=new SimpleDateFormat(data.mode!=0&&oneDay?"h:mm a":"MMM d",Locale.US);
             if(data.times.size()==1){p.setTextAlign(Paint.Align.CENTER);c.drawText(label.format(new Date(data.times.first())),(l+r)/2,getHeight()-13*density,p);}
             else{p.setTextAlign(Paint.Align.LEFT);c.drawText(label.format(new Date(data.times.first())),l,getHeight()-13*density,p);p.setTextAlign(Paint.Align.RIGHT);c.drawText(label.format(new Date(data.times.last())),r,getHeight()-13*density,p);}
         }
-        if(finite==0){p.setTextAlign(Paint.Align.CENTER);c.drawText("Not enough known-distance positions",(l+r)/2,(t+b)/2,p);}
+        if(finite==0){p.setTextAlign(Paint.Align.CENTER);c.drawText(data.labelDays.values().stream().anyMatch(day->!day.pending.isEmpty())?"Saved days need labels":"No eligible positions for these filters",(l+r)/2,(t+b)/2,p);}
         else if(data.mode==0&&data.times.size()==1){p.setTextAlign(Paint.Align.RIGHT);p.setTextSize(10*scaled);c.drawText("One labeled day",r,18*density,p);}
         if(isFocused()){p.setStyle(Paint.Style.STROKE);p.setColor(MainActivity.FG);p.setStrokeWidth(density);c.drawRoundRect(density,density,getWidth()-density,getHeight()-density,14*density,14*density,p);p.setStyle(Paint.Style.FILL);}
     }
