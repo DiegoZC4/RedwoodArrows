@@ -97,12 +97,15 @@ dated session the Daily graph correctly shows points, not an invented trend.
 The intervals resample whole usable rounds 4,096 times, separately within each
 distance, retaining equal distance weights in variance. They are the 2.5th and
 97.5th percentiles of the resampled SD estimates, not the spread of individual
-arrows. At least **10 usable rounds at each included distance** are required;
-otherwise a hollow provisional point says **Insufficient data for 95% CI**.
-Rounds with fewer than two located arrows do not establish spread. No observed
-between-round variation also withholds the interval rather than asserting zero
-uncertainty. The minimum is a guardrail, not a guarantee of statistical coverage.
-Intervals assume comparable independent rounds and exclude systematic photo
+arrows. **There is no minimum-round cutoff**: short days show error bars too,
+with their round counts alongside. The old ten-round gate is removed from both
+daily intervals and the optional trend. Small-sample bootstrap intervals are
+rough and can underestimate uncertainty; nominal 95% coverage is not guaranteed.
+Rounds with fewer than two located arrows do not establish spread. If an included
+distance has only one usable round, or every bootstrap estimate is identical,
+the point stays visible with a specific **CI unavailable** explanation: resampling
+cannot establish between-round uncertainty there. A repeated-distance filter can
+still show its own interval. Intervals assume comparable independent rounds and exclude systematic photo
 calibration error, missing impacts and persistent between-round dependence.
 Computation is offline, repeatable and off the UI thread. More observations can
 narrow the uncertainty without automatically lowering the SD. Corrections from

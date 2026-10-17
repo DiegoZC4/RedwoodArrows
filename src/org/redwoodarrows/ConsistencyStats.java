@@ -7,10 +7,9 @@ import java.util.*;
  * No annotations, review flags, distances or shooter identities are written. */
 final class ConsistencyStats {
     static final int DAILY=0,ROLLING_30=30,ROLLING_100=100;
-    // A product guardrail, not a claim that ten clusters guarantees 95% coverage.
-    static final int MIN_INTERVAL_ROUNDS=10,BOOTSTRAP_REPLICATES=4096;
+    static final int BOOTSTRAP_REPLICATES=4096;
     static final class Interval {
-        static final int PENDING=0,READY=1,TOO_FEW=2,DEGENERATE=3;
+        static final int PENDING=0,READY=1,NO_SPREAD=2,DEGENERATE=3,SINGLE_ROUND=4;
         final int state;final double lower,upper;
         Interval(int state,double lower,double upper){this.state=state;this.lower=lower;this.upper=upper;}
         static Interval unavailable(int state){return new Interval(state,Double.NaN,Double.NaN);}
@@ -27,8 +26,8 @@ final class ConsistencyStats {
         final long time;final List<ProgressStats.End> ends;final SortedSet<Long> ranges=new TreeSet<>();
         final TreeMap<Long,Bucket> buckets=new TreeMap<>();
         int located,records,unlocated,misses,unchecked,usableRounds;boolean countsKnown=true;
-        double spread=Double.NaN;String rangeKey="";int minRoundsPerDistance;
-        volatile Interval interval=Interval.unavailable(Interval.TOO_FEW);
+        double spread=Double.NaN;String rangeKey="";
+        volatile Interval interval=Interval.unavailable(Interval.NO_SPREAD);
         Sample(long time,List<ProgressStats.End> ends){this.time=time;this.ends=new ArrayList<>(ends);
             // Stable cluster ordering makes bounds reproducible on both phones.
             this.ends.sort((a,b)->{int order=Long.compare(a.group.created,b.group.created);return order==0?a.group.id.compareTo(b.group.id):order;});
@@ -38,11 +37,13 @@ final class ConsistencyStats {
                 long range=rangeKey(uniformDistance(end.group));ranges.add(range);
                 Bucket bucket=buckets.get(range);if(bucket==null){bucket=new Bucket();buckets.put(range,bucket);}bucket.add(end);
             }
-            rangeKey=ranges.toString();double variances=0;minRoundsPerDistance=buckets.isEmpty()?0:Integer.MAX_VALUE;
-            for(Bucket bucket:buckets.values())minRoundsPerDistance=Math.min(minRoundsPerDistance,bucket.rounds.size());
-            for(Bucket bucket:buckets.values()){if(bucket.df==0)return;variances+=bucket.squared/bucket.df;}
+            rangeKey=ranges.toString();double variances=0;boolean singletonDistance=false;
+            for(Bucket bucket:buckets.values()){if(bucket.df==0)return;variances+=bucket.squared/bucket.df;singletonDistance|=bucket.rounds.size()==1;}
             if(!buckets.isEmpty())spread=Math.sqrt(variances/buckets.size());
-            if(Double.isFinite(spread)&&minRoundsPerDistance>=MIN_INTERVAL_ROUNDS)interval=Interval.unavailable(Interval.PENDING);
+            // No product minimum. A singleton distance has no empirical
+            // between-round distribution to resample; treating it as fixed
+            // would falsely omit that distance's uncertainty in All ranges.
+            if(Double.isFinite(spread))interval=Interval.unavailable(singletonDistance?Interval.SINGLE_ROUND:Interval.PENDING);
         }
         void computeInterval(){
             if(interval.state!=Interval.PENDING)return;
@@ -120,7 +121,7 @@ final class ConsistencyStats {
     }
     void computeIntervals(){for(Series line:series)for(Sample sample:line.samples){if(Thread.currentThread().isInterrupted())return;sample.computeInterval();}}
     static double quantile(double[] sorted,double probability){double at=(sorted.length-1)*probability;int lo=(int)Math.floor(at),hi=(int)Math.ceil(at);return sorted[lo]+(sorted[hi]-sorted[lo])*(at-lo);}
-    static boolean trendReady(Sample sample){return sample!=null&&sample.records>=ROLLING_100&&sample.usableRounds>=MIN_INTERVAL_ROUNDS&&Double.isFinite(sample.spread);}
+    static boolean trendReady(Sample sample){return sample!=null&&sample.records>=ROLLING_100&&Double.isFinite(sample.spread);}
     Sample trendAt(Series line,long time){for(Sample sample:line.trend)if(sample.time==time)return sample;return null;}
     static long rangeKey(double meters){return Math.round(meters*1000);}
     static long day(long time){Calendar calendar=Calendar.getInstance();calendar.setTimeInMillis(time);calendar.set(Calendar.HOUR_OF_DAY,0);calendar.set(Calendar.MINUTE,0);calendar.set(Calendar.SECOND,0);calendar.set(Calendar.MILLISECOND,0);return calendar.getTimeInMillis();}

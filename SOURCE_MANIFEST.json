@@ -12,8 +12,8 @@
     },
     {
       "path": "AndroidManifest.xml",
-      "bytes": 2234,
-      "sha256": "df3d6d90a106f3611b3676311dbd567cf367116f8f5975b3c625d496305a6d56"
+      "bytes": 2237,
+      "sha256": "58194a21c9caf2ea4fcfcda024cce827c50736cabd59b96a9b4aebad790ca140"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 13415,
-      "sha256": "4ac0b3e6b96a4fb65b7d2710817491487eb99858183441bfbdb65d3f3efda871"
+      "bytes": 13689,
+      "sha256": "4305e3e02357bdbd482b140f27c06cfabdd5b0a14bd4aef028dd76b56ebe1ccc"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -182,13 +182,13 @@
     },
     {
       "path": "src/org/redwoodarrows/ConsistencyStats.java",
-      "bytes": 10559,
-      "sha256": "1553dfd5294097e2094b427fb506e6dbf58bb8941d4adf3921a63c84a1383cb8"
+      "bytes": 10523,
+      "sha256": "8acb2319979fc35130c61e7bafd21b05eb4ffb827e5d72c57878ed00accf32ee"
     },
     {
       "path": "src/org/redwoodarrows/ConsistencyUi.java",
-      "bytes": 16011,
-      "sha256": "a257cf87123e8034294abbf380e6a203afbebac08b08d8b8ef6ca9acd7309d96"
+      "bytes": 16300,
+      "sha256": "fe19cfa80da5e27fd571b209a64e4201f3ca41c76cc9ff43c33de6a05e002345"
     },
     {
       "path": "src/org/redwoodarrows/CyclicPagerMotion.java",
@@ -472,8 +472,8 @@
     },
     {
       "path": "tests/ConfidenceStatsTest.java",
-      "bytes": 8867,
-      "sha256": "05e6a02c3339a3ab49cfd0e4a4449cd5e498f1876682b38af74c1baa0d9170ea"
+      "bytes": 11367,
+      "sha256": "68faaa241abee05ea1897a9f73389863414341a7a75f569a0957f3312ae29d0f"
     },
     {
       "path": "tests/ConsistencyStatsTest.java",
