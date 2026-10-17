@@ -118,7 +118,10 @@ final class PhotoCamera extends LinearLayout implements TextureView.SurfaceTextu
             if(image==null||pending==null||failed)return;camera.removeCallbacks(captureTimeout);camera.removeCallbacks(focusTimeout);
             ByteBuffer data=image.getPlanes()[0].getBuffer();if(data.remaining()>SyncFiles.PHOTO_LIMIT)throw new IOException("Photo exceeds the 8 MB sync limit; it was not saved");byte[] jpeg=new byte[data.remaining()];data.get(jpeg);
             Store.Group snapshot=pending;pending=null;Store.Group saved=store.saveCameraPhoto(snapshot,jpeg,shutterAt,image.getTimestamp());
-            if(snapshot.views.isEmpty())a.shooters.captured(saved);SyncRuntime.saved(a);saving=false;
+            saving=false;
+            // Nothing after this point may report a committed photo as unsaved.
+            try{if(snapshot.views.isEmpty())a.shooters.captured(saved);SyncRuntime.saved(a);}catch(Exception e){android.util.Log.w("RedwoodArrows","Photo saved; optional follow-up deferred",e);}
+            PhotoDetectionRuntime.saved(a);
             a.runOnUiThread(()->{if(!a.isDestroyed())listener.saved(saved);});
         }catch(Exception e){fail("Photo not saved: "+e.getMessage());}
         finally{if(closed||!saving)release();}

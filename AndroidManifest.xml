@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.redwoodarrows" android:versionCode="31" android:versionName="0.31.0-photo-first">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.redwoodarrows" android:versionCode="32" android:versionName="0.32.0-background-dots">
     <uses-sdk android:minSdkVersion="31" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -13,6 +13,7 @@
     </queries>
     <application android:name=".SyncRuntime" android:label="Redwood Arrows" android:icon="@drawable/ic_launcher" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false" android:extractNativeLibs="true" android:debuggable="true" android:usesCleartextTraffic="false" android:supportsRtl="true">
         <service android:name=".SyncJobs" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
+        <service android:name=".PhotoDetectionJobs" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true" />
         <meta-data android:name="com.google.ar.core" android:value="optional" />
         <meta-data android:name="com.google.ar.core.min_apk_version" android:value="261960000" />
         <activity android:name="com.google.ar.core.InstallActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:excludeFromRecents="true" android:exported="false" android:launchMode="singleTop" android:theme="@android:style/Theme.Material.Light.Dialog.Alert" />

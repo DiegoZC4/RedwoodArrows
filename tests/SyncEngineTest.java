@@ -104,6 +104,13 @@ public final class SyncEngineTest {
             JSONObject bad=read(b,id).json();bad.getJSONArray("views").getJSONObject(0).put("file","../escape.jpg");
             try{SyncFiles.snapshot(b,Store.Group.from(bad));throw new AssertionError("Unsafe path accepted");}catch(IOException expected){}
             check(SyncFiles.canonical(new JSONObject("{\"z\":1,\"a\":2}")).equals(SyncFiles.canonical(new JSONObject("{\"a\":2,\"z\":1}"))),"Stable hashes across object ordering");
+            Store.Group automatic=make(a,"Capture before background inference");Store.View pending=automatic.views.get(0);pending.calibration=null;pending.observations.clear();PhotoDetection.prepare(a,pending);a.save(automatic);engine(a,ra).run();engine(b,rb).run();
+            check(read(b,automatic.id).views.get(0).detectionState.equals("pending")&&Store.results(read(b,automatic.id)).isEmpty(),"Other phone receives raw photo before detection finishes");
+            PhotoDetection.Task task=new PhotoDetection.Task(a,automatic,pending);Store.Group corrected=read(a,automatic.id);corrected.practice.meters=13.716;a.save(corrected);
+            PhotoDetection.complete(a,task,Arrays.asList(new double[]{8,7,.9}),null,false);engine(a,ra).run();engine(b,rb).run();Store.Group detected=read(b,automatic.id);
+            check(detected.views.get(0).detectionState.equals("done")&&detected.views.get(0).observations.size()==1&&detected.views.get(0).observations.get(0).a[1]==7,"Background dots and completion sync to other login automatically");
+            check(detected.practice.meters==13.716&&Arrays.equals(Files.readAllBytes(new File(b.directory(detected),pending.file).toPath()),jpeg),"Later detection sync preserves corrected distance and original image");
+            check(PhotoDetection.pending(b).isEmpty(),"Shared queue state does not run duplicate inference on receiving phone");
         }finally{Store.editingGroupId=null;try(java.util.stream.Stream<Path> files=Files.walk(temp)){for(Path file:(Iterable<Path>)files.sorted(Comparator.reverseOrder())::iterator)Files.delete(file);}}
         check(!Files.exists(temp),"Both simulated phones and recovery fixtures cleaned");System.out.println("Two-phone sync checks passed: "+checks);
     }

@@ -8,7 +8,7 @@ import java.util.function.IntConsumer;
 public final class TargetCanvas extends View {
     final Store.Group group;final TargetPreset preset;final List<Store.Result> results;final Paint p=new Paint(3);
     boolean small;int selected=-1;private IntConsumer onArrow;private final List<float[]> dots=new ArrayList<>();private float downX,downY;private boolean dragged;
-    public TargetCanvas(Context c,Store.Group g){super(c);group=g;preset=g.preset();results=Store.results(g);describe();}
+    public TargetCanvas(Context c,Store.Group g){super(c);group=g;preset=g.preset();results=PhotoDetection.previewResults(g);describe();}
     public TargetCanvas(Context c,TargetPreset target){super(c);group=null;preset=target;results=Collections.emptyList();describe();}
     void describe(){setBackgroundColor(0xFF101C19);setContentDescription(preset.name+". "+preset.dimensions()+". "+(preset.circular()?"Ring geometry preview of one spot.":"Paper outline only; no animal artwork or scoring zones."));}
     TargetCanvas thumbnail(){small=true;setBackgroundColor(Color.TRANSPARENT);return this;}
@@ -25,6 +25,7 @@ public final class TargetCanvas extends View {
         if(group==null&&!small){p.setStyle(Paint.Style.FILL);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(11*d);p.setColor(0xFFB5C4B7);c.drawText(preset.circular()?(preset.spots>1?"One of "+preset.spots+" spots":"Ring geometry"):"Paper outline only",x,getHeight()-2*d,p);p.setTextAlign(Paint.Align.LEFT);}
         p.setTextSize(11*d);p.setTypeface(Typeface.DEFAULT_BOLD);List<float[]> labels=new ArrayList<>();for(Store.Result r:results)if(Double.isFinite(r.x)&&Double.isFinite(r.y)){float px=x+(float)(r.x/preset.scaleMm())*radius,py=y-(float)(r.y/preset.scaleMm())*radius;dots.add(new float[]{px,py,r.id});boolean uncertain=r.method.contains("neural")&&(r.views<2||!r.warning.isEmpty());p.setStyle(uncertain?Paint.Style.STROKE:Paint.Style.FILL);p.setStrokeWidth(1.5f*d);p.setColor(selected==r.id?0xFFD8EB98:0xFFFFAA65);c.drawCircle(px,py,(selected==r.id?5:small?2.8f:3.5f)*d,p);boolean crowded=false;for(float[] old:labels)if(Math.hypot(px-old[0],py-old[1])<15*d)crowded=true;if(!small&&(selected==r.id||!crowded)){p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2*d);p.setColor(0xFF101C19);c.drawText(""+r.id,px+5*d,py-4*d,p);p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);c.drawText(""+r.id,px+5*d,py-4*d,p);labels.add(new float[]{px,py});}}
     }
+    @Override public void draw(Canvas canvas){super.draw(canvas);if(group!=null){String status=PhotoDetection.plotStatus(group,results);if(!status.isEmpty()){float d=getResources().getDisplayMetrics().density;p.setStyle(Paint.Style.FILL);p.setColor(0xFFD8EB98);p.setTextSize(10*d);p.setTypeface(Typeface.DEFAULT);p.setTextAlign(Paint.Align.CENTER);canvas.drawText(status,getWidth()/2f,getHeight()-7*d,p);p.setTextAlign(Paint.Align.LEFT);}}}
     @Override public boolean onTouchEvent(MotionEvent e){if(onArrow==null)return super.onTouchEvent(e);switch(e.getActionMasked()){
         case MotionEvent.ACTION_DOWN:downX=e.getX();downY=e.getY();dragged=false;return true;
         case MotionEvent.ACTION_MOVE:dragged|=Math.hypot(e.getX()-downX,e.getY()-downY)>android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop();return true;

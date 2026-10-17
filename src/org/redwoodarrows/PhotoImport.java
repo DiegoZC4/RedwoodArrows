@@ -57,7 +57,7 @@ final class PhotoImport {
             for(Uri uri:uris){try{int count=target.views.size();a.store.importPhoto(a,target,uri);if(target.views.size()==count)duplicates[0]++;}catch(Exception e){failed[0]++;android.util.Log.w("RedwoodArrows","Selected photo could not be imported",e);}}
         },()->{
             int added=target.views.size()-before;if(before==0&&added>0)a.shooters.captured(target);a.analysis=null;a.undo.clear();a.groupImages.thumbs.evictAll();
-            if(target.hasData()){a.group=target;a.index=Math.max(0,before);a.results();SyncRuntime.saved(a);if(added>0)a.assignTargets(target,a.index,true);}
+            if(target.hasData()){a.group=target;a.index=Math.max(0,before);a.results();SyncRuntime.saved(a);PhotoDetectionRuntime.saved(a);}
             else a.home();
             String notice=added+" photo"+(added==1?"":"s")+" saved"+(duplicates[0]>0?" · "+duplicates[0]+" already added":"");
             if(failed[0]>0)a.message(notice+". "+failed[0]+" could not be read. Saved photos are safe; select the missing ones again. Camera-roll originals were not changed.");

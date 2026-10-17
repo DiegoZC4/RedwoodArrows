@@ -26,7 +26,7 @@ final class GroupImageViewer extends Dialog {
         final int request=++generation;final int requestedKind=kind,requestedIndex=index;if(pending!=null)pending.cancel(false);surface.removeAllViews();release();
         for(int i=0;i<3;i++){modes[i].setBackground(a.rounded(i==kind?MainActivity.ACCENT:MainActivity.PANEL));modes[i].setTextColor(i==kind?MainActivity.BG:MainActivity.FG);modes[i].setSelected(i==kind);}
         photoNumber.setText((index+1)+" / "+group.views.size());previous.setEnabled(index>0);next.setEnabled(index<group.views.size()-1);
-        if(kind==GroupImages.PLOT){TargetCanvas plot=new TargetCanvas(a,group).thumbnail();int size=1536;Bitmap rendered=Bitmap.createBitmap(size,size,Bitmap.Config.ARGB_8888);plot.layout(0,0,size,size);plot.draw(new Canvas(rendered));display(new GroupImages.Picture(rendered,""));return;}
+        if(kind==GroupImages.PLOT){TargetCanvas plot=new TargetCanvas(a,group).thumbnail();int size=1536;Bitmap rendered=Bitmap.createBitmap(size,size,Bitmap.Config.ARGB_8888);plot.layout(0,0,size,size);plot.draw(new Canvas(rendered));boolean provisional=false;for(Store.View v:group.views)provisional|=PhotoDetection.proposal(v);display(new GroupImages.Picture(rendered,provisional?"Estimated alignment · not reviewed":""));return;}
         TextView loading=a.text("Loading…",14,MainActivity.MUTED);loading.setGravity(Gravity.CENTER);surface.addView(loading,new FrameLayout.LayoutParams(-1,-1));
         pending=a.worker.submit(()->{GroupImages.Picture picture=a.groupImages.load(group,requestedIndex,requestedKind,requestedKind==GroupImages.WARPED?1536:2048);a.runOnUiThread(()->{if(closed||request!=generation){if(picture.bitmap!=null)picture.bitmap.recycle();return;}display(picture);});});
     }
@@ -34,5 +34,6 @@ final class GroupImageViewer extends Dialog {
         surface.removeAllViews();bitmap=picture.bitmap;
         if(bitmap==null){TextView empty=a.text(picture.problem.equals("Not aligned")?"This view has no confirmed target alignment.":picture.problem,16,MainActivity.MUTED);empty.setGravity(Gravity.CENTER);surface.addView(empty,new FrameLayout.LayoutParams(-1,-1));return;}
         PhotoCanvas image=new PhotoCanvas(a,null);image.readOnly=true;image.photo(bitmap,new Store.View());image.setTag("full-image");image.setContentDescription(GroupImages.LABELS[kind]+(kind==GroupImages.WARPED?". Cyan outlines show the saved target fit":"")+". Read-only image. Pinch to zoom; drag to pan.");surface.addView(image,new FrameLayout.LayoutParams(-1,-1));
+        if(!picture.problem.isEmpty()){TextView note=a.text(picture.problem,13,MainActivity.ACCENT);note.setBackgroundColor(MainActivity.BG);note.setGravity(Gravity.CENTER);surface.addView(note,new FrameLayout.LayoutParams(-1,a.dp(40),Gravity.BOTTOM));}
     }
 }

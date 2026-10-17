@@ -24,7 +24,7 @@ final class GroupingGallery {
         else try{int n=BulkLabels.undoCount(a.store);if(n>0){Button restore=a.button("Undo "+n+" labels",()->{try{BulkLabels.undo(a.store);a.bulkNotice="Bulk labels undone";a.home();}catch(Exception e){a.message(e.getMessage());}});restore.setTag("bulk-undo");a.cell(selection,restore);}}catch(Exception ignored){}
         a.add(a.root,selection);
         if(!a.bulkNotice.isEmpty()){TextView notice=a.text(a.bulkNotice,12,MainActivity.ACCENT);notice.setTag("bulk-notice");a.add(a.root,notice);}
-        LinearLayout columns=a.row();columns.setPadding(a.dp(3),0,a.dp(3),0);columns.setTag("group-columns");for(String label:new String[]{"2D","Warped","Original","Shooter"}){TextView t=line(label,11,MainActivity.MUTED);t.setGravity(Gravity.CENTER);column(columns,t,-2);}a.root.addView(columns);
+        LinearLayout columns=a.row();columns.setPadding(a.dp(3),0,a.dp(3),0);columns.setTag("group-columns");for(String label:new String[]{"2D","Detected","Original","Shooter"}){TextView t=line(label,11,MainActivity.MUTED);t.setGravity(Gravity.CENTER);column(columns,t,-2);}a.root.addView(columns);
         grid=new GridView(a);grid.setTag("grouping-grid");grid.setNumColumns(1);grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
         grid.setVerticalSpacing(a.dp(5));grid.setPadding(0,a.dp(4),0,a.dp(8));grid.setClipToPadding(false);grid.setSelector(android.R.color.transparent);
         adapter=new BaseAdapter(){
@@ -66,7 +66,7 @@ final class GroupingGallery {
         if(a.bulkSelecting){name.setEnabled(false);distance.setEnabled(false);owner.setOnClickListener(v->toggle(group));}
         LinearLayout info=new LinearLayout(a);info.setOrientation(1);info.setGravity(Gravity.CENTER_VERTICAL);info.setTag("group-details:"+group.id);info.setFocusable(true);info.setClickable(true);info.setOnClickListener(v->{remember();a.openGroup(group);});info.setContentDescription(s.caption()+". "+s.count()+". Open grouping details.");
         if(a.bulkSelecting)info.setOnClickListener(v->toggle(group));info.setOnLongClickListener(v->beginSelection(group));
-        info.addView(line(s.caption(),11,MainActivity.MUTED));info.addView(line(new java.text.SimpleDateFormat("MMM d",Locale.US).format(new Date(group.created)),10,MainActivity.MUTED));info.addView(line(s.count(),10,MainActivity.FG));if(s.photos>1)info.addView(line(s.photos+" photos",10,MainActivity.MUTED));for(int i=0;i<info.getChildCount();i++)info.getChildAt(i).setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);owner.addView(info,new LinearLayout.LayoutParams(-1,0,1));
+        String detection=PhotoDetection.status(group);info.addView(line(s.caption(),11,MainActivity.MUTED));info.addView(line(new java.text.SimpleDateFormat("MMM d",Locale.US).format(new Date(group.created)),10,MainActivity.MUTED));info.addView(line(detection.isEmpty()?s.count():detection,10,MainActivity.FG));if(s.photos>1)info.addView(line(s.photos+" photos",10,MainActivity.MUTED));for(int i=0;i<info.getChildCount();i++)info.getChildAt(i).setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);owner.addView(info,new LinearLayout.LayoutParams(-1,0,1));
         column(row,owner,height);return row;
     }
     private boolean assign(Store.Group group,ShooterRoster.Person person){

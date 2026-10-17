@@ -12,8 +12,8 @@
     },
     {
       "path": "AndroidManifest.xml",
-      "bytes": 2235,
-      "sha256": "a19225abab9fa6f2c29c2c5ebd71053cb9cafa3f4d4f3b48a12620e75d39d1a2"
+      "bytes": 2375,
+      "sha256": "b197b44a34cc1bf128f2534441388ed84a00cae90f177ac33594cd7dcf5f7edf"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 15983,
-      "sha256": "4f1ac854fd0e798c610a49556ddb272540a9213c64fb3fb9e94995ada3868a12"
+      "bytes": 16694,
+      "sha256": "60fa4eccd59468357f59ffd974f68c5620c4a50fd72db82ddc202bf1fe62c368"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -237,18 +237,18 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupDetails.java",
-      "bytes": 9135,
-      "sha256": "70006b1583db7e11569d08e721f624370575a12c285182f594843a98b5a4b437"
+      "bytes": 9268,
+      "sha256": "4165199d37d48e722dac74525c2e8539defb6ef176a1d9862db21173922e40a0"
     },
     {
       "path": "src/org/redwoodarrows/GroupImageViewer.java",
-      "bytes": 5226,
-      "sha256": "f56faa3b3b7ad866e69430485b595b3ae39f5dc8ce6b3bc5cae7609c8226a6ba"
+      "bytes": 5625,
+      "sha256": "71e41d8e5e3ee85b5f7ad01f82eb98daab9f0ecbb6626e85ada01d6060ba20c2"
     },
     {
       "path": "src/org/redwoodarrows/GroupImages.java",
-      "bytes": 7308,
-      "sha256": "ab16aca653f336ea682fe7058c113451a8691bb2f6cdd31a03d06d599605d294"
+      "bytes": 9365,
+      "sha256": "1cb93b3a48f8771b29705bc6da7082d89344cbd298d5749c1998d0c679c94ff2"
     },
     {
       "path": "src/org/redwoodarrows/GroupPresentation.java",
@@ -257,8 +257,8 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupingGallery.java",
-      "bytes": 13441,
-      "sha256": "8240793f0b2d10f126cf9c7410a124eb642ad8cb47866e4a0fd42486919e2177"
+      "bytes": 13519,
+      "sha256": "35b837c3e223c16f70e4c44f2de430a1c72b1d94dec4e30be243662646209899"
     },
     {
       "path": "src/org/redwoodarrows/HybridVision.java",
@@ -277,8 +277,8 @@
     },
     {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 46238,
-      "sha256": "2ffbbe9efea2d8648c7cad8dbb0d386367f68bf20750dfa7eaf4cafa307d19d3"
+      "bytes": 47134,
+      "sha256": "627b4c9525faa959fac06bdb001823f90d849c419427b32cb27742f18f8db5cc"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -287,18 +287,18 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignmentUi.java",
-      "bytes": 14753,
-      "sha256": "ef592922bc9517dbec429f97e580dcf4a3f8d211f809dc509a91ba3ca3c43f04"
+      "bytes": 14805,
+      "sha256": "54a31d2672912fec4a7c6aed120a5558deacde10fdcffbe5b7af2b49437c6c0e"
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignments.java",
-      "bytes": 9247,
-      "sha256": "a2773d37379cf972ad37dc515fcbd9143e0322d052f12b24ccadf84ccdc77331"
+      "bytes": 9497,
+      "sha256": "7869fea2ab5b052f26a2f1d9f095a09a021def52025d50daf3f6e678029ecc28"
     },
     {
       "path": "src/org/redwoodarrows/PhotoCamera.java",
-      "bytes": 18090,
-      "sha256": "42dec356397174b32268bfb39aa4c322c5056d664f2e31a6321a229562f96d53"
+      "bytes": 18334,
+      "sha256": "96988ae97e44b45eaa042949bce33ba1b8375d9a4f18b470212a9eeb78e681ca"
     },
     {
       "path": "src/org/redwoodarrows/PhotoCanvas.java",
@@ -306,14 +306,29 @@
       "sha256": "3cd8f53b510e15b09d3b45184ea246750eebcd51b469658aa6beb6e7cf5f1fab"
     },
     {
+      "path": "src/org/redwoodarrows/PhotoDetection.java",
+      "bytes": 7059,
+      "sha256": "1069320d0f52aedace8b511671e9372bdf6b7d12ec1feedadb115701b364c279"
+    },
+    {
+      "path": "src/org/redwoodarrows/PhotoDetectionJobs.java",
+      "bytes": 1094,
+      "sha256": "646afa283a0d9d8c7cbbb896a6a00e127565299855045754eadf03cadde0857c"
+    },
+    {
+      "path": "src/org/redwoodarrows/PhotoDetectionRuntime.java",
+      "bytes": 3704,
+      "sha256": "120c2d736e0a893ee98fafba9199c192d21be80a6d69cb538c8f254c4116fdd7"
+    },
+    {
       "path": "src/org/redwoodarrows/PhotoImport.java",
-      "bytes": 5806,
-      "sha256": "a59c8694535fc7a1c61f053b446a49fedf33039cd0184ef3e82d4a4713a8b2e3"
+      "bytes": 5789,
+      "sha256": "0702559ea8bff96491eb0b297af78bd8df3612bbca619f9c151b9359425c5320"
     },
     {
       "path": "src/org/redwoodarrows/PhotoSavedUi.java",
-      "bytes": 2109,
-      "sha256": "a8d0a8c7f261ac152537e08bf3d88ead83bc0128e24b6ed205741801c9bac6b2"
+      "bytes": 3114,
+      "sha256": "8224be093604fa686427956c5b45f40b0886ce2185dbb8247f1a9b0afdac2307"
     },
     {
       "path": "src/org/redwoodarrows/Practice.java",
@@ -367,8 +382,8 @@
     },
     {
       "path": "src/org/redwoodarrows/Store.java",
-      "bytes": 33736,
-      "sha256": "f4ecc6151735b7a11bf22bae5665626f2d715a000a17c771502c14820433476b"
+      "bytes": 34087,
+      "sha256": "84b3a58eff8a73e09a339285c92393f2f038edff6a94aae853ac6090ab821301"
     },
     {
       "path": "src/org/redwoodarrows/SweepAnalysis.java",
@@ -447,8 +462,8 @@
     },
     {
       "path": "src/org/redwoodarrows/TargetCanvas.java",
-      "bytes": 4905,
-      "sha256": "905677815a7a3cdbe2d79580e2c90911d7e6ab33e8fec29f4400c516d3f2f39f"
+      "bytes": 5362,
+      "sha256": "b766afaa0a74765f9a7f6a1dd594b7acb2ade197a3b7bef41d4eb4231cebd62f"
     },
     {
       "path": "src/org/redwoodarrows/TargetCatalog.java",
@@ -536,14 +551,19 @@
       "sha256": "15c8925b2c873ab538f52577db2cb8fe1a1a7730139b3a7aa1bf886a2efd5186"
     },
     {
+      "path": "tests/PhotoDetectionTest.java",
+      "bytes": 7101,
+      "sha256": "ce162b37d23cfc25612eb589734831c862b935ad0269f68b0e81a304e26403a0"
+    },
+    {
       "path": "tests/ReleaseUpdateTest.java",
       "bytes": 6546,
       "sha256": "99ec497cbbba38f905b883c1c7c7a146a6dceea2859d4e3eba57670dd01a2296"
     },
     {
       "path": "tests/SyncEngineTest.java",
-      "bytes": 13429,
-      "sha256": "adadcca24a678aeb608b8fe40874b1e34b027bce13577136753b93adca234369"
+      "bytes": 14822,
+      "sha256": "33eb637eebaa9ea58eebd07156f1bcd07eca93767b2388d4362e4ce58846c76b"
     },
     {
       "path": "tests/SyncWakeupTest.java",
@@ -577,8 +597,8 @@
     },
     {
       "path": "tools/test_sync.sh",
-      "bytes": 2402,
-      "sha256": "18d4ac9e0a26eae380f98bc74f02cec6d6564512cbca2e2f3784bb6a0fae76f5"
+      "bytes": 2543,
+      "sha256": "7bf8f24ebd0ba7c997dbf99927e34f4d3ade2b10223492276905df7288a285cc"
     }
   ],
   "personal_photos": 0,

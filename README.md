@@ -42,11 +42,20 @@ JPEG bytes are kept unchanged; EXIF orientation is applied only for display and
 analysis. No GPS location is requested. A saved-photo receipt appears only after
 both image and grouping manifest are committed on the phone.
 
-**Review arrows** is optional. Opening it on an unmarked photo starts dot
-suggestions automatically, locally and offline. Correct mistakes and assign
-targets, then Save. Shooter and distance can also be corrected in this review;
-Save commits them with the annotations. Neither annotations nor label changes
-rewrite the original JPEG.
+Arrow detection starts **automatically in the background after saving**, locally
+and offline. You can take the next photo immediately. The groupings table updates
+its **Detected** column with arrow dots; **Original** stays untouched. When one
+target can be aligned unambiguously, an **estimated** 2D plot and rectified image
+appear too. Otherwise dots remain on the photograph instead of guessing a target.
+These provisional alignments do not count as reviewed progress measurements.
+Pending work survives reopening; inference failure never removes a saved photo.
+The original photo/labels sync first, and detected dots sync afterward.
+
+**Review arrows** is optional, for correcting dots or assigning intended targets.
+Save commits corrections; background results cannot overwrite them. An unfinished
+job is deferred while that grouping is open for editing and resumes in the table.
+The Find dots button is a retry, not a required step. Neither annotations nor label
+changes rewrite the original JPEG. Older saved groupings are not reprocessed.
 **Add photos** opens Android's
 photo picker directly (with a Files fallback), without whole-library access.
 Select up to 12 views of the **same unchanged grouping** at once. For another

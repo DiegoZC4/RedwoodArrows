@@ -30,7 +30,7 @@ public final class Store {
         static Observation from(JSONObject j)throws JSONException{Observation o=new Observation(j.getInt("arrow"),doubles(j.getJSONArray("a")),doubles(j.optJSONArray("b")));o.source=j.optString("source","manual");o.associationWarning=j.optString("association_warning");o.confidence=j.optDouble("detector_score",Double.NaN);return o;}
     }
     public static final class View {
-        public String file,id=UUID.randomUUID().toString(),session="",sourceHash="";
+        public String file,id=UUID.randomUUID().toString(),session="",sourceHash="",detectionState="",detectionOwner="";
         public int width,height,rawWidth,rawHeight,rotation;
         public long timestamp,cameraTimestamp,capturedAt;
         public double[] pose,k;
@@ -40,6 +40,7 @@ public final class Store {
         public JSONObject json()throws JSONException {
             JSONObject j=new JSONObject().put("id",id).put("file",file).put("width",width).put("height",height).put("rawWidth",rawWidth).put("rawHeight",rawHeight).put("rotation",rotation).put("timestamp_ns",timestamp).put("camera_timestamp_ns",cameraTimestamp).put("session",session);
             if(!sourceHash.isEmpty())j.put("source_sha256",sourceHash);if(capturedAt>0)j.put("captured_at_ms",capturedAt);
+            if(!detectionState.isEmpty())j.put("photo_detection",detectionState).put("photo_detection_owner",detectionOwner);
             if(pose!=null)j.put("camera_pose_row_major",array(pose));if(k!=null)j.put("intrinsics",array(k));
             if(calibration!=null)j.put("calibration",new JSONObject().put("h_image_to_radius",array(calibration.h)).put("radial_fit_rms_radius",Double.isFinite(calibration.rms)?calibration.rms:JSONObject.NULL).put("source",calibration.source).put("reviewed",calibration.reviewed));
             JSONArray a=new JSONArray();for(Observation o:observations)a.put(o.json());j.put("observations",a);JSONArray rim=new JSONArray(),inside=new JSONArray();for(double[] p:rimMarks)rim.put(array(p));for(double[] p:innerMarks)inside.put(array(p));return j.put("rim_marks",rim).put("inner_marks",inside);
@@ -47,6 +48,7 @@ public final class Store {
         static View from(JSONObject j)throws JSONException {
             View v=new View();v.id=j.getString("id");v.file=j.getString("file");v.width=j.getInt("width");v.height=j.getInt("height");v.rawWidth=j.optInt("rawWidth");v.rawHeight=j.optInt("rawHeight");v.rotation=j.optInt("rotation");v.timestamp=j.optLong("timestamp_ns");v.session=j.optString("session");v.pose=doubles(j.optJSONArray("camera_pose_row_major"));v.k=doubles(j.optJSONArray("intrinsics"));
             v.cameraTimestamp=j.optLong("camera_timestamp_ns");
+            v.detectionState=j.optString("photo_detection");v.detectionOwner=j.optString("photo_detection_owner");
             v.sourceHash=j.optString("source_sha256");if(!v.sourceHash.isEmpty()&&!v.sourceHash.matches("[a-f0-9]{64}"))throw new JSONException("Invalid source photo digest");v.capturedAt=Math.max(0,j.optLong("captured_at_ms"));
             JSONObject c=j.optJSONObject("calibration");if(c!=null){v.calibration=new Geometry.Calibration(doubles(c.getJSONArray("h_image_to_radius")),c.optDouble("radial_fit_rms_radius"),c.optString("source"));v.calibration.reviewed=c.optBoolean("reviewed");}
             JSONArray a=j.optJSONArray("observations");if(a!=null)for(int i=0;i<a.length();i++)v.observations.add(Observation.from(a.getJSONObject(i)));a=j.optJSONArray("rim_marks");if(a!=null)for(int i=0;i<a.length();i++)v.rimMarks.add(doubles(a.getJSONArray(i)));a=j.optJSONArray("inner_marks");if(a!=null)for(int i=0;i<a.length();i++)v.innerMarks.add(doubles(a.getJSONArray(i)));return v;
@@ -255,6 +257,7 @@ public final class Store {
         int orientation=new ExifInterface(new ByteArrayInputStream(jpeg)).getAttributeInt(ExifInterface.TAG_ORIENTATION,1);
         View view=new View();view.file=view.id+".jpg";view.sourceHash=SyncFiles.hash(jpeg);view.capturedAt=capturedAt;view.cameraTimestamp=cameraTimestamp;
         view.rawWidth=bounds.outWidth;view.rawHeight=bounds.outHeight;boolean swap=orientation>=5&&orientation<=8;view.width=swap?bounds.outHeight:bounds.outWidth;view.height=swap?bounds.outWidth:bounds.outHeight;
+        PhotoDetection.prepare(this,view);
         Group saved=copy(shutter);if(!saved.hasData())saved.created=capturedAt;saved.views.add(view);
         synchronized(FILE_LOCK){
             File photo=new File(directory(saved),view.file);if(photo.exists())throw new IOException("Camera photo identity collision");
@@ -286,7 +289,7 @@ public final class Store {
             Matrix m=new Matrix();switch(orientation){case 2:m.setScale(-1,1);break;case 3:m.setRotate(180);break;case 4:m.setScale(1,-1);break;case 5:m.setRotate(90);m.postScale(-1,1);break;case 6:m.setRotate(90);break;case 7:m.setRotate(270);m.postScale(-1,1);break;case 8:m.setRotate(270);break;}
             if(!m.isIdentity()){Bitmap rotated=Bitmap.createBitmap(b,0,0,b.getWidth(),b.getHeight(),m,true);if(rotated!=b)b.recycle();b=rotated;}
             if(Math.max(b.getWidth(),b.getHeight())>2048){double s=2048.0/Math.max(b.getWidth(),b.getHeight());Bitmap small=Bitmap.createScaledBitmap(b,Math.max(1,(int)Math.round(b.getWidth()*s)),Math.max(1,(int)Math.round(b.getHeight()*s)),true);if(small!=b)b.recycle();b=small;}
-            View v=new View();v.sourceHash=hash;v.capturedAt=captured;saveBitmap(g,v,b);long created=g.created;
+            View v=new View();v.sourceHash=hash;v.capturedAt=captured;PhotoDetection.prepare(this,v);saveBitmap(g,v,b);long created=g.created;
             if(g.diskDigest==null&&g.views.isEmpty()&&captured>0)g.created=captured;
             g.views.add(v);try{save(g);}catch(Exception failure){g.views.remove(v);g.created=created;throw failure;}return v;
         }finally{if(b!=null)b.recycle();if(!temporary.delete())android.util.Log.w("RedwoodArrows","Could not remove temporary imported photo");}

@@ -86,6 +86,9 @@ final class PhotoAssignments {
     Store.Group commit(Store store)throws Exception {
         List<File> created=new ArrayList<>();boolean saved=false;
         try{
+            // Explicit geometry edits (including deleting every dot) take
+            // precedence over any still-pending automatic work.
+            if(revision>0)for(Store.View v:family())if(!v.detectionState.isEmpty())v.detectionState="edited";
             for(Store.View v:draft.views)if(copies.containsKey(v.file)){
                 File dest=new File(store.directory(draft),SyncFiles.photo(v.file)),source=new File(store.directory(original),SyncFiles.photo(copies.get(v.file)));
                 if(!source.isFile())throw new IOException("Original photo is missing");

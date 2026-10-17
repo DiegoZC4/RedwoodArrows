@@ -15,7 +15,7 @@ final class PhotoAssignmentUi extends Dialog {
     final List<double[]> outer=new ArrayList<>(),inner=new ArrayList<>();
     Bitmap bitmap;String mode="select";boolean loaded,closed,saving,finding,suggestionAttempted,labelsEdited;int generation;
     PhotoAssignmentUi(MainActivity activity,Store.Group group,int index,boolean autoSuggest)throws Exception {
-        super(activity,android.R.style.Theme_Material_NoActionBar_Fullscreen);a=activity;model=new PhotoAssignments(group,group.views.get(index).id);this.autoSuggest=autoSuggest;
+        super(activity,android.R.style.Theme_Material_NoActionBar_Fullscreen);a=activity;model=new PhotoAssignments(group,group.views.get(index).id);this.autoSuggest=autoSuggest||model.reference().detectionState.equals("pending");
         LinearLayout root=new LinearLayout(a);root.setOrientation(1);root.setBackgroundColor(MainActivity.BG);root.setPadding(a.dp(10),a.dp(6),a.dp(10),a.dp(8));
         LinearLayout header=a.row();Button back=a.button("Back",this::onBackPressed);back.setTag("assign-back");header.addView(back,new LinearLayout.LayoutParams(a.dp(64),a.dp(44)));
         TextView title=a.text("Arrows → targets",20,MainActivity.FG);title.setTypeface(null,1);title.setGravity(Gravity.CENTER);header.addView(title,new LinearLayout.LayoutParams(0,a.dp(48),1));
