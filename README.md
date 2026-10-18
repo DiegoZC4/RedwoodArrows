@@ -52,6 +52,10 @@ Pending work survives reopening; inference failure never removes a saved photo.
 The original photo/labels sync first, and detected dots sync afterward.
 
 **Review arrows** is optional, for correcting dots or assigning intended targets.
+The default **Move dots** mode lets you drag existing dots directly; a magnifier
+shows the entry center away from your finger. Pinch to zoom, use **− / Fit / +**,
+or drag empty space to pan. **Add dot** deliberately places one missed arrow,
+then returns to moving dots. Tapping an existing dot never adds a duplicate.
 Save commits corrections; background results cannot overwrite them. An unfinished
 job is deferred while that grouping is open for editing and resumes in the table.
 The Find dots button is a retry, not a required step. Neither annotations nor label
@@ -68,8 +72,8 @@ location metadata; the capture date is retained when available.
 Photo intake keeps these photo copies for automatic shared sync, independently
 of the **2D only** preference for new analyzed sweeps. Existing 2D-only groupings
 are not converted or altered. Signed-in phones queue saved photos offline and
-sync when connected, including groupings with no arrow positions yet. The newly
-imported photo opened in the editor also gets automatic suggestions. The ordinary
+sync when connected, including groupings with no arrow positions yet. Imported
+photos also get automatic background suggestions without opening an editor. The ordinary
 moving-phone **Sweep** remains available under
 **More → New grouping options**. Photos of different physical ends should not be
 selected as one grouping; sync does not infer that they are the same end.
@@ -92,12 +96,12 @@ Photos, coordinates and per-arrow walk-up distances are untouched. If a selected
 round changes elsewhere while the editor is open, the batch stops without
 overwriting it; reopen the selection to use the current data.
 
-In **Arrows → targets**, dots appear automatically when first reviewing a photo. Use **Add** for
-missed shaft-entry centers (drag dots to refine), and **Remove** for false positives.
+In **Arrows → targets**, use **Move dots** to drag estimated entry centers,
+**Add dot** for missed entries, and **Remove** for selected false positives.
 **Retry dots** is only a fallback. Reopening a saved photo does not rerun detection
 or resurrect removed dots, and late results cannot overwrite edits made while
 detection runs. Tap **All**, or **None** then select
-individual arrow dots, and tap **Target** followed by their intended bullseye.
+individual arrow dots, and tap **Targets** followed by their intended bullseye.
 Repeat for another subset if you switched bullseyes during the end. Field/Hunter
 faces get automatic ring outlines; **Mark rings/corners** is the manual fallback.
 The app never infers intent from which bullseye an arrow landed closest to.
@@ -105,6 +109,13 @@ The app never infers intent from which bullseye an arrow landed closest to.
 and queues the correction for sync. Leaving without saving keeps the captured
 photo but discards annotation changes. Existing groupings have **Assign arrows
 to targets** too. All faces in a grouping use its selected printed-size preset.
+
+Both phones sync the full annotations: detected pixel positions, manual moves,
+added/deleted dots, intended targets, and calibration. They compute the same 2D
+coordinates from that shared data. Corrections save offline and send when online;
+an open editor is never replaced by a remote update. Concurrent offline edits to
+the same grouping are flagged for a choice instead of silently losing either
+version. No new login or database migration is needed for this update.
 
 Multiple faces remain one grouping and one logical photo, with disjoint arrow
 subsets and target-specific calibrations in the existing sync format. Identical

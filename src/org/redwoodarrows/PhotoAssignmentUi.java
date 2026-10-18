@@ -13,7 +13,7 @@ final class PhotoAssignmentUi extends Dialog {
     final Set<Integer> selected=new TreeSet<>();final ArrayDeque<String> undo=new ArrayDeque<>();
     final List<Geometry.Calibration> candidates=new ArrayList<>();
     final List<double[]> outer=new ArrayList<>(),inner=new ArrayList<>();
-    Bitmap bitmap;String mode="select";boolean loaded,closed,saving,finding,suggestionAttempted,labelsEdited;int generation;
+    Bitmap bitmap;String mode="select",moveSnapshot;boolean loaded,closed,saving,finding,suggestionAttempted,labelsEdited;int generation;
     PhotoAssignmentUi(MainActivity activity,Store.Group group,int index,boolean autoSuggest)throws Exception {
         super(activity,android.R.style.Theme_Material_NoActionBar_Fullscreen);a=activity;model=new PhotoAssignments(group,group.views.get(index).id);this.autoSuggest=autoSuggest||model.reference().detectionState.equals("pending");
         LinearLayout root=new LinearLayout(a);root.setOrientation(1);root.setBackgroundColor(MainActivity.BG);root.setPadding(a.dp(10),a.dp(6),a.dp(10),a.dp(8));
@@ -21,15 +21,21 @@ final class PhotoAssignmentUi extends Dialog {
         TextView title=a.text("Arrows → targets",20,MainActivity.FG);title.setTypeface(null,1);title.setGravity(Gravity.CENTER);header.addView(title,new LinearLayout.LayoutParams(0,a.dp(48),1));
         save=a.button("Save",this::commit);save.setTag("assign-save");save.setBackground(a.rounded(MainActivity.ACCENT));save.setTextColor(MainActivity.BG);save.setEnabled(false);header.addView(save,new LinearLayout.LayoutParams(a.dp(64),a.dp(44)));root.addView(header);
         labels=new CaptureLabels(a,()->model.draft,false,(person,practice)->{if(saving||closed)return false;if(!model.draft.shooter.id.equals(person.id))Store.confirmShooter(model.draft,person);model.draft.practice=Practice.from(practice.json());labelsEdited=true;return true;});root.addView(labels);
-        status=a.text("Loading saved photo…",13,MainActivity.MUTED);status.setTag("assign-status");status.setMinHeight(a.dp(40));status.setMaxLines(2);root.addView(status);
+        status=a.text("Loading saved photo…",13,MainActivity.MUTED);status.setTag("assign-status");status.setMinHeight(a.dp(48));status.setLines(2);root.addView(status);
         photo=new PhotoCanvas(a,new PhotoCanvas.Listener(){
             public void tap(double x,double y){tapAt(x,y);}public void proposal(double[] line){}
-            public void select(int id){if(saving)return;if(!selected.add(id))selected.remove(id);refresh();}
-            public void beforeMove(){snapshot();}public void moved(){model.revision++;model.draft.practice.checked="";refresh();}
-        });photo.setTag("assign-photo");photo.selectedIds=selected;photo.setContentDescription("Photo editor. Select arrow dots, then Target to assign their bullseye. Add marks missed entries; drag a mark to refine. Pinch to zoom, drag empty space to pan.");root.addView(photo,new LinearLayout.LayoutParams(-1,0,1));
-        LinearLayout actions=a.row();String[] labels={"Select","Add","Target"},values={"select","add","target"};
+            public void select(int id){if(saving)return;if(!selected.add(id))selected.remove(id);mode="select";refresh();}
+            public void beforeMove(){try{moveSnapshot=model.snapshot();}catch(Exception e){status.setText(e.getMessage());}}
+            public void cancelMove(){moveSnapshot=null;}
+            public void moved(){if(moveSnapshot!=null){undo.addLast(moveSnapshot);while(undo.size()>25)undo.removeFirst();}moveSnapshot=null;model.revision++;model.draft.practice.checked="";refresh();}
+        });photo.setTag("assign-photo");photo.selectedIds=selected;photo.setContentDescription("Drag an existing arrow dot to move it. A magnifier shows the entry center. Pinch to zoom or use zoom buttons; drag empty space to pan. Tap dots to select which arrows to assign to a target. Add dot only marks a missing arrow.");
+        FrameLayout imageArea=new FrameLayout(a);imageArea.addView(photo,new FrameLayout.LayoutParams(-1,-1));
+        LinearLayout zoom=a.row();zoom.setBackground(a.rounded(MainActivity.PANEL));String[] zoomNames={"−","Fit","+"};
+        for(int i=0;i<3;i++){final int action=i;Button button=a.button(zoomNames[i],()->{if(saving)return;if(action==1)photo.fitPhoto();else photo.zoomBy(action==0?.5f:2f);});button.setTag("assign-zoom:"+i);button.setContentDescription(i==0?"Zoom out":i==1?"Fit whole photo":"Zoom in");zoom.addView(button,new LinearLayout.LayoutParams(a.dp(48),a.dp(44)));}
+        FrameLayout.LayoutParams zoomPlace=new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.RIGHT);zoomPlace.setMargins(a.dp(8),a.dp(8),a.dp(8),a.dp(8));imageArea.addView(zoom,zoomPlace);root.addView(imageArea,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout actions=a.row();String[] labels={"Move dots","Add dot","Targets"},values={"select","add","target"};
         for(int i=0;i<3;i++){final String value=values[i];modes[i]=a.button(labels[i],()->{mode=value;refresh();});modes[i].setTag("assign-mode:"+value);a.cell(actions,modes[i]);}root.addView(actions);
-        LinearLayout selection=a.row();Button all=a.button("All",()->{selected.addAll(model.ids());mode=selected.isEmpty()?"add":"target";refresh();});all.setTag("assign-all");a.cell(selection,all);
+        LinearLayout selection=a.row();Button all=a.button("All",()->{selected.addAll(model.ids());mode="select";refresh();});all.setTag("assign-all");a.cell(selection,all);
         Button none=a.button("None",()->{selected.clear();mode="select";refresh();});none.setTag("assign-none");a.cell(selection,none);
         Button remove=a.button("Remove",()->{if(saving||selected.isEmpty())return;snapshot();model.remove(selected);selected.clear();refresh();});remove.setTag("assign-remove");a.cell(selection,remove);
         Button revert=a.button("Undo",this::undo);revert.setTag("assign-undo");a.cell(selection,revert);root.addView(selection);
@@ -41,7 +47,7 @@ final class PhotoAssignmentUi extends Dialog {
     @Override public void show(){super.show();getWindow().setLayout(-1,-1);getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         a.worker.execute(()->{Bitmap loaded=null;try{loaded=a.store.bitmap(model.original,model.reference());if(loaded==null)throw new IllegalArgumentException("Photo unavailable");}catch(Exception ignored){}
             final Bitmap image=loaded;a.runOnUiThread(()->{if(closed||a.isDestroyed()){if(image!=null)image.recycle();return;}if(image==null){status.setText("Saved photo unavailable. Your grouping is unchanged.");return;}
-                bitmap=image;this.loaded=true;photo.photo(image,model.reference());selected.addAll(model.ids());mode=selected.isEmpty()&&!autoSuggest?"add":"select";candidates.addAll(model.targets());refresh();
+                bitmap=image;this.loaded=true;photo.photo(image,model.reference());selected.addAll(model.ids());mode="select";candidates.addAll(model.targets());refresh();
                 // Only a newly captured/imported photo opts in. Reopening a
                 // corrected grouping must not resurrect rejected detections.
                 if(autoSuggest&&model.ids().isEmpty())suggest();findTargets();});});
@@ -59,14 +65,14 @@ final class PhotoAssignmentUi extends Dialog {
         if(mode.equals("outer"))status.setText(outer.size()+" outer marks · first defines up · add 8+ around the rim");
         else if(mode.equals("inner"))status.setText(inner.size()+" inner marks · "+model.draft.preset().innerHint);
         else if(mode.equals("corners"))status.setText(outer.size()+" / 4 paper corners · top left → top right → bottom right → bottom left");
-        else if(mode.equals("target"))status.setText(selected.size()+" selected · tap their intended bullseye");
-        else if(mode.equals("add"))status.setText("Tap shaft-entry centers · drag dots to refine · then Target");
-        else status.setText(finding?"Finding arrow dots · you can keep editing":selected.size()+" / "+model.ids().size()+" selected · tap dots, or All → target");
+        else if(mode.equals("target"))status.setText(selected.size()+" selected · tap their intended bullseye\nPinch to zoom · drag empty space to pan");
+        else if(mode.equals("add"))status.setText("Tap one missing arrow’s entry center\nExisting dots still drag · pinch to zoom");
+        else status.setText("Drag dots to move · pinch to zoom\n"+(finding?"Finding arrow dots · editing stays available":model.ids().isEmpty()?"No dots yet · Add dot to mark a missed arrow":selected.size()+" / "+model.ids().size()+" selected · tap dots, then Targets"));
     }catch(Exception e){status.setText("Could not display marks: "+e.getMessage());}}
     void snapshot(){try{undo.addLast(model.snapshot());while(undo.size()>25)undo.removeFirst();}catch(Exception e){status.setText(e.getMessage());}}
     void undo(){if(saving)return;try{if(mode.equals("outer")||mode.equals("corners")){if(!outer.isEmpty())outer.remove(outer.size()-1);}else if(mode.equals("inner")){if(!inner.isEmpty())inner.remove(inner.size()-1);}else if(!undo.isEmpty()){ShooterRoster.Person person=model.draft.shooter;Practice practice=model.draft.practice;boolean confirmed=CaptureDefaults.confirmed(model.draft);model.restore(undo.removeLast());if(confirmed)Store.confirmShooter(model.draft,person);else model.draft.shooter=person;model.draft.practice=practice;model.draft.practice.checked="";selected.retainAll(model.ids());}refresh();}catch(Exception e){status.setText(e.getMessage());}}
     void tapAt(double x,double y){if(!loaded||saving)return;try{
-        if(mode.equals("add")){snapshot();selected.add(model.add(x,y));refresh();}
+        if(mode.equals("add")){snapshot();selected.add(model.add(x,y));mode="select";refresh();}
         else if(mode.equals("target")){int chosen=TargetSelection.nearest(candidates,x,y);if(chosen<0){status.setText("No outline here. Use Mark rings, then assign the selected arrows.");return;}assign(candidates.get(chosen));}
         else if(mode.equals("outer")) {outer.add(new double[]{x,y});refresh();}
         else if(mode.equals("inner")) {inner.add(new double[]{x,y});refresh();}
@@ -79,10 +85,10 @@ final class PhotoAssignmentUi extends Dialog {
         a.worker.execute(()->{if(closed||a.isDestroyed())return;Bitmap image=null;List<double[]> points=new ArrayList<>();String error="";try{image=a.store.bitmap(model.original,model.reference());if(image==null)throw new IllegalArgumentException("Photo missing");if(a.impact==null)a.impact=ImpactVision.fromAssets(a);points=a.impact.detect(image).points;}catch(Exception e){error="Could not find dots. Retry dots, or Add them manually.";}finally{if(image!=null)image.recycle();}
             final List<double[]> hits=points;final String problem=error;a.runOnUiThread(()->finishSuggestions(revision,hits,problem));});
     }
-    void finishSuggestions(int revision,List<double[]> hits,String problem){finding=false;if(closed||saving||a.isDestroyed())return;refresh();if(!problem.isEmpty()){status.setText(problem);return;}if(model.revision!=revision){status.setText("Your edits were kept; late suggestions were ignored.");return;}
+    void finishSuggestions(int revision,List<double[]> hits,String problem){finding=false;if(closed||saving||a.isDestroyed())return;refresh();if(!problem.isEmpty()){status.setText(problem);return;}if(model.revision!=revision||photo.editingMark()){status.setText("Your edits were kept; late suggestions were ignored.");return;}
                 snapshot();int count=0;try{for(double[] hit:hits){boolean near=false;for(Store.View v:model.family())for(Store.Observation o:v.observations)if(!o.line&&Math.hypot(o.a[0]-hit[0],o.a[1]-hit[1])<model.reference().width*.012)near=true;if(near)continue;
                     int id=model.add(hit[0],hit[1]);selected.add(id);for(Store.View v:model.family())for(Store.Observation o:v.observations)if(o.id==id){o.source="impact-model:photo-suggestion";o.confidence=hit[2];o.associationWarning="Suggested entry; check the dot and assign its intended bullseye.";}count++;}
-                    mode="select";refresh();status.setText(count>0?count+" suggested dots · correct mistakes, then assign targets":"No new dots found · Add missed entries, or Retry dots");
+                    mode="select";refresh();status.setText(count>0?"Drag dots to move · pinch to zoom\n"+count+" suggested · select dots, then Targets":"No new dots found · Add dot, or Retry dots");
                 }catch(Exception e){status.setText("Existing marks kept. "+e.getMessage());}
     }
     void manual(){if(selected.isEmpty())return;try{

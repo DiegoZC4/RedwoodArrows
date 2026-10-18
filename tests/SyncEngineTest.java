@@ -17,6 +17,13 @@ public final class SyncEngineTest {
         g.views.add(v);Files.write(new File(store.directory(g),v.file).toPath(),jpeg);store.save(g);return g;
     }
     static Store.Group read(Store store,String id)throws Exception{return store.read(new File(new File(store.root,id),"group.json"));}
+    static Store.Observation dot(Store.Group group,int id){for(Store.View v:group.views)for(Store.Observation o:v.observations)if(o.id==id)return o;throw new AssertionError("Missing arrow "+id);}
+    static void sameAnnotations(Store a,Store b,String id)throws Exception{
+        Store.Group left=read(a,id),right=read(b,id);
+        check(SyncFiles.canonical(left.json()).equals(SyncFiles.canonical(right.json())),"Both phones have exactly the same annotation manifest");
+        check(Store.csv(left).equals(Store.csv(right)),"Both phones compute identical target-plane coordinates");
+        for(Store.View v:right.views)check(Arrays.equals(Files.readAllBytes(new File(b.directory(right),v.file).toPath()),jpeg),"Annotation sync preserves every original/aliased JPEG");
+    }
     static SyncEngine engine(Store store,SyncEngine.Transport remote)throws Exception{return new SyncEngine(store,new File(store.root.getParentFile(),"sync"),remote);}
     static abstract class Proxy implements SyncEngine.Transport {
         final SyncEngine.Transport base;Proxy(SyncEngine.Transport b){base=b;}
@@ -111,6 +118,27 @@ public final class SyncEngineTest {
             check(detected.views.get(0).detectionState.equals("done")&&detected.views.get(0).observations.size()==1&&detected.views.get(0).observations.get(0).a[1]==7,"Background dots and completion sync to other login automatically");
             check(detected.practice.meters==13.716&&Arrays.equals(Files.readAllBytes(new File(b.directory(detected),pending.file).toPath()),jpeg),"Later detection sync preserves corrected distance and original image");
             check(PhotoDetection.pending(b).isEmpty(),"Shared queue state does not run duplicate inference on receiving phone");
+            // Exercise the actual editor draft/commit format, in both directions:
+            // pixel moves, provenance, target homographies, additions and deletion.
+            PhotoAssignments correction=new PhotoAssignments(detected,pending.id);
+            Store.Observation moved=dot(correction.draft,1);moved.a[0]=8.125;moved.a[1]=6.375;moved.source="manual correction";moved.confidence=Double.NaN;correction.revision++;
+            Geometry.Calibration face=new Geometry.Calibration(new double[]{.1,0,-.8,0,-.1,.8,0,0,1},0,"reference image-up fixture");face.reviewed=true;
+            correction.assign(Collections.singleton(1),face);correction.commit(b);
+            check(dot(read(a,automatic.id),1).a[0]==8,"Offline correction does not require or mutate the other phone");
+            engine(b,rb).run();engine(a,ra).run();sameAnnotations(a,b,automatic.id);
+            check(dot(read(a,automatic.id),1).a[0]==8.125&&dot(read(a,automatic.id),1).a[1]==6.375,"Member's subpixel drag returns to owner without rounding");
+            check(dot(read(a,automatic.id),1).source.contains("manual correction")&&Double.isNaN(dot(read(a,automatic.id),1).confidence),"Manual correction provenance replaces the detector score on both phones");
+            check(Store.results(read(a,automatic.id)).size()==1&&read(a,automatic.id).views.get(0).detectionState.equals("edited"),"Confirmed target assignment and edited state sync back");
+            correction=new PhotoAssignments(read(a,automatic.id),pending.id);int added=correction.add(12.25,10.75);
+            Geometry.Calibration secondFace=TargetSelection.copy(face);secondFace.h[2]=-1.2;correction.assign(Collections.singleton(added),secondFace);correction.commit(a);
+            engine(a,ra).run();engine(b,rb).run();sameAnnotations(a,b,automatic.id);
+            check(dot(read(b,automatic.id),added).a[0]==12.25&&Store.results(read(b,automatic.id)).size()==2,"New arrow and different intended target reach member with no ID duplication");
+            check(PhotoAssignments.photoIndices(read(b,automatic.id)).size()==1,"Synced multiple target planes remain one logical photo");
+            correction=new PhotoAssignments(read(b,automatic.id),pending.id);correction.remove(Collections.singleton(1));correction.commit(b);engine(b,rb).run();engine(a,ra).run();sameAnnotations(a,b,automatic.id);
+            check(Store.results(read(a,automatic.id)).size()==1&&dot(read(a,automatic.id),added).a[1]==10.75,"Deleting a false positive syncs without removing a different arrow");
+            correction=new PhotoAssignments(read(a,automatic.id),pending.id);correction.remove(Collections.singleton(added));correction.commit(a);engine(a,ra).run();engine(b,rb).run();
+            engine(a,ra).run();engine(b,rb).run();sameAnnotations(a,b,automatic.id);
+            check(new PhotoAssignments(read(b,automatic.id),pending.id).ids().isEmpty()&&PhotoDetection.pending(a).isEmpty()&&PhotoDetection.pending(b).isEmpty(),"Deleting every dot syncs durably and never resurrects detections on retry");
         }finally{Store.editingGroupId=null;try(java.util.stream.Stream<Path> files=Files.walk(temp)){for(Path file:(Iterable<Path>)files.sorted(Comparator.reverseOrder())::iterator)Files.delete(file);}}
         check(!Files.exists(temp),"Both simulated phones and recovery fixtures cleaned");System.out.println("Two-phone sync checks passed: "+checks);
     }

@@ -7,16 +7,19 @@ import java.util.*;
 
 /** Zoomable evidence view. Every displayed mark is in the saved photo's pixels. */
 public final class PhotoCanvas extends View {
-    public interface Listener {void tap(double x,double y);void proposal(double[] line);void beforeMove();void moved();default void select(int id){}}
+    public interface Listener {void tap(double x,double y);void proposal(double[] line);void beforeMove();void moved();default void select(int id){}default void cancelMove(){}}
     public Bitmap bitmap;public Store.View frame;public String mode="hit";public int arrow=1;public TargetPreset preset=TargetCatalog.defaultPreset();
     public boolean readOnly=false,unconfirmed=false;
     public Set<Integer> selectedIds;public Map<Integer,String> targetLabels=new HashMap<>();
     public List<Geometry.Calibration> targetOutlines=new ArrayList<>();
     public List<double[]> outer=new ArrayList<>(),inner=new ArrayList<>(),proposals=new ArrayList<>();public double[] pending;
     private final Paint p=new Paint(3);private final Listener listener;private final ScaleGestureDetector pinch;
-    private float zoom=1,panX=0,panY=0,downX,downY,lastX,lastY;private boolean moved,multi,movingMark;private double[] dragged,dragOrigin;
+    private float zoom=1,panX=0,panY=0,downX,downY,lastX,lastY;private boolean moved,multi,movingMark;private double[] dragged,dragOrigin;private Store.Observation draggedObservation;
     public PhotoCanvas(Context context,Listener listener){super(context);this.listener=listener;setBackgroundColor(0xFF07110F);
-        pinch=new ScaleGestureDetector(context,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector d){float old=zoom,next=Math.max(1,Math.min(10,zoom*d.getScaleFactor()));float beforeX=originX(),beforeY=originY();panX+=(d.getFocusX()-beforeX)*(1-next/old)+(bitmap.getWidth()*fit()*(next-old)/2);panY+=(d.getFocusY()-beforeY)*(1-next/old)+(bitmap.getHeight()*fit()*(next-old)/2);zoom=next;invalidate();return true;}});
+        pinch=new ScaleGestureDetector(context,new ScaleGestureDetector.SimpleOnScaleGestureListener(){@Override public boolean onScale(ScaleGestureDetector d){zoomAt(d.getScaleFactor(),multi?lastX:d.getFocusX(),multi?lastY:d.getFocusY());return true;}});
+        // A quick second grab of the same dot is still a dot drag, not Android's
+        // double-tap-and-drag zoom shortcut. Zoom has its own pinch/buttons.
+        pinch.setQuickScaleEnabled(false);pinch.setStylusScaleEnabled(false);
         setContentDescription("Target photo. Pinch to zoom. Tap to mark; drag a marked endpoint to refine. Two fingers move the photo.");
     }
     public void photo(Bitmap bitmap,Store.View frame){this.bitmap=bitmap;this.frame=frame;zoom=1;panX=panY=0;pending=null;proposals.clear();outer.clear();inner.clear();invalidate();}
@@ -24,6 +27,10 @@ public final class PhotoCanvas extends View {
     float scale(){return fit()*zoom;}float originX(){return bitmap==null?0:(getWidth()-bitmap.getWidth()*scale())/2+panX;}float originY(){return bitmap==null?0:(getHeight()-bitmap.getHeight()*scale())/2+panY;}
     double[] image(float x,float y){return new double[]{(x-originX())/scale(),(y-originY())/scale()};}
     float sx(double x){return originX()+(float)x*scale();}float sy(double y){return originY()+(float)y*scale();}
+    void zoomAt(float factor,float x,float y){if(bitmap==null)return;float old=zoom,next=Math.max(1,Math.min(10,old*factor));float beforeX=originX(),beforeY=originY();panX+=(x-beforeX)*(1-next/old)+bitmap.getWidth()*fit()*(next-old)/2;panY+=(y-beforeY)*(1-next/old)+bitmap.getHeight()*fit()*(next-old)/2;zoom=next;invalidate();}
+    void zoomBy(float factor){cancelMark();zoomAt(factor,getWidth()/2f,getHeight()/2f);}
+    void fitPhoto(){cancelMark();zoom=1;panX=panY=0;invalidate();}
+    boolean editingMark(){return movingMark;}
     @Override protected void onDraw(Canvas c){super.onDraw(c);if(bitmap==null)return;p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);c.drawBitmap(bitmap,null,new RectF(originX(),originY(),originX()+bitmap.getWidth()*scale(),originY()+bitmap.getHeight()*scale()),p);
         if(mode.equals("target"))for(int n=0;n<targetOutlines.size();n++){
             Geometry.Calibration fit=targetOutlines.get(n);double[] inv=Geometry.inverse(fit.h);p.setStyle(Paint.Style.STROKE);p.setColor(0xBBF4C967);p.setStrokeWidth(1.5f*getResources().getDisplayMetrics().density);
@@ -35,24 +42,40 @@ public final class PhotoCanvas extends View {
         for(Store.Observation o:frame.observations){int color=selectedIds==null?(o.id==arrow?0xFFD8F18C:0xFF7CDED6):selectedIds.contains(o.id)?0xFFD8F18C:0xFF7CDED6;p.setColor(color);p.setStrokeWidth(4);if(o.line)c.drawLine(sx(o.a[0]),sy(o.a[1]),sx(o.b[0]),sy(o.b[1]),p);mark(c,o.a,color,""+o.id+(targetLabels.containsKey(o.id)?"·"+targetLabels.get(o.id):""));if(o.line)mark(c,o.b,color,"");
             if(selectedIds!=null&&selectedIds.contains(o.id)){p.setStyle(Paint.Style.STROKE);p.setColor(color);p.setStrokeWidth(2*getResources().getDisplayMetrics().density);c.drawCircle(sx(o.a[0]),sy(o.a[1]),12*getResources().getDisplayMetrics().density,p);}}
         if(mode.equals("outer")||mode.equals("inner")||mode.equals("corners")){String[] corners={"TL","TR","BR","BL"};for(int i=0;i<outer.size();i++)mark(c,outer.get(i),0xFFFFCE72,mode.equals("corners")?corners[Math.min(i,3)]:i==0?"UP":"");if(!mode.equals("corners"))for(double[] q:inner)mark(c,q,0xFF7FDFEA,"");}if(pending!=null)mark(c,pending,0xFFFFCE72,"1");
+        if(movingMark&&dragged!=null&&!readOnly)magnifier(c);
     }
+    /** Raw pixels plus a hollow reticle, away from the finger. No image copies. */
+    private void magnifier(Canvas c){float d=getResources().getDisplayMetrics().density,size=Math.min(128*d,Math.min(getWidth()-24*d,getHeight()-24*d));if(size<48*d)return;
+        float left=downX<getWidth()/2f?getWidth()-size-12*d:12*d,top=12*d,cx=left+size/2,cy=top+size/2;
+        RectF box=new RectF(left,top,left+size,top+size);Path clip=new Path();clip.addRoundRect(box,12*d,12*d,Path.Direction.CW);c.save();c.clipPath(clip);c.drawColor(0xFF07110F);
+        float s=Math.max(scale()*2.5f,2*d),x=cx-(float)dragged[0]*s,y=cy-(float)dragged[1]*s;p.setStyle(Paint.Style.FILL);p.setColor(Color.WHITE);p.setAlpha(255);c.drawBitmap(bitmap,null,new RectF(x,y,x+bitmap.getWidth()*s,y+bitmap.getHeight()*s),p);
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(3*d);p.setColor(0xCC07110F);reticle(c,cx,cy,d);p.setStrokeWidth(1.2f*d);p.setColor(0xFFD8F18C);reticle(c,cx,cy,d);c.restore();
+        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2*d);p.setColor(0xFFD8F18C);c.drawRoundRect(box,12*d,12*d,p);
+    }
+    private void reticle(Canvas c,float x,float y,float d){c.drawCircle(x,y,3*d,p);c.drawLine(x-18*d,y,x-6*d,y,p);c.drawLine(x+6*d,y,x+18*d,y,p);c.drawLine(x,y-18*d,x,y-6*d,p);c.drawLine(x,y+6*d,x,y+18*d,p);}
     void mark(Canvas c,double[] point,int color,String label){float x=sx(point[0]),y=sy(point[1]),d=getResources().getDisplayMetrics().density;p.setColor(0xDD101C19);p.setStyle(Paint.Style.FILL);c.drawCircle(x,y,7*d,p);p.setColor(color);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2*d);c.drawCircle(x,y,7*d,p);c.drawLine(x-11*d,y,x+11*d,y,p);c.drawLine(x,y-11*d,x,y+11*d,p);p.setStyle(Paint.Style.FILL);p.setTextSize(14*d);p.setTypeface(Typeface.DEFAULT_BOLD);c.drawText(label,x+12*d,y-9*d,p);}
     private double distance(double[] q,float x,float y){return Math.hypot(sx(q[0])-x,sy(q[1])-y);}
     @Override public boolean onTouchEvent(MotionEvent e){if(bitmap==null)return false;pinch.onTouchEvent(e);float x=e.getX(),y=e.getY();
-        if(e.getActionMasked()==MotionEvent.ACTION_DOWN){downX=lastX=x;downY=lastY=y;moved=multi=movingMark=false;dragged=dragOrigin=null;double best=24*getResources().getDisplayMetrics().density;
+        if(e.getActionMasked()==MotionEvent.ACTION_DOWN){downX=lastX=x;downY=lastY=y;moved=multi=movingMark=false;dragged=dragOrigin=null;draggedObservation=null;double best=28*getResources().getDisplayMetrics().density;
             List<double[]> candidates=new ArrayList<>();if(mode.equals("outer")||mode.equals("corners"))candidates.addAll(outer);else if(mode.equals("inner"))candidates.addAll(inner);else for(Store.Observation o:frame.observations){candidates.add(o.a);if(o.line)candidates.add(o.b);}
-            if(!readOnly&&!mode.equals("target")&&!mode.equals("select"))for(double[] q:candidates){double d=distance(q,x,y);if(d<best){best=d;dragged=q;}}return true;}
+            if(!readOnly&&!mode.equals("target"))for(double[] q:candidates){double d=distance(q,x,y);if(d<best){best=d;dragged=q;}}
+            if(dragged!=null)for(Store.Observation o:frame.observations)if(o.a==dragged||o.b==dragged)draggedObservation=o;return true;}
         if(e.getActionMasked()==MotionEvent.ACTION_CANCEL){cancelMark();multi=true;return true;}
-        if(e.getPointerCount()>1){cancelMark();multi=true;if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&!pinch.isInProgress()){float mx=(e.getX(0)+e.getX(1))/2,my=(e.getY(0)+e.getY(1))/2;panX+=mx-lastX;panY+=my-lastY;lastX=mx;lastY=my;invalidate();}else{lastX=(e.getX(0)+e.getX(1))/2;lastY=(e.getY(0)+e.getY(1))/2;}return true;}
+        if(e.getPointerCount()>1){cancelMark();multi=true;if(e.getActionMasked()==MotionEvent.ACTION_MOVE){float mx=(e.getX(0)+e.getX(1))/2,my=(e.getY(0)+e.getY(1))/2;panX+=mx-lastX;panY+=my-lastY;lastX=mx;lastY=my;invalidate();}else{lastX=(e.getX(0)+e.getX(1))/2;lastY=(e.getY(0)+e.getY(1))/2;}return true;}
         if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&!multi){if(Math.hypot(x-downX,y-downY)>7*getResources().getDisplayMetrics().density)moved=true;
-            if(moved&&dragged!=null){if(!movingMark){listener.beforeMove();dragOrigin=dragged.clone();movingMark=true;}double[] q=image(x,y);dragged[0]=Math.max(0,Math.min(bitmap.getWidth()-1,q[0]));dragged[1]=Math.max(0,Math.min(bitmap.getHeight()-1,q[1]));}
+            if(moved&&dragged!=null){if(!movingMark){listener.beforeMove();dragOrigin=dragged.clone();movingMark=true;performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);}
+                // Keep the initial finger offset: grabbing near a small dot must
+                // not snap its center underneath the finger when dragging starts.
+                dragged[0]=Math.max(0,Math.min(bitmap.getWidth()-1,dragOrigin[0]+(x-downX)/scale()));dragged[1]=Math.max(0,Math.min(bitmap.getHeight()-1,dragOrigin[1]+(y-downY)/scale()));}
             else if(moved){panX+=x-lastX;panY+=y-lastY;}lastX=x;lastY=y;invalidate();return true;}
-        if(e.getActionMasked()==MotionEvent.ACTION_UP){if(movingMark){for(Store.Observation o:frame.observations)if(o.a==dragged||o.b==dragged){o.source="manual correction";o.confidence=Double.NaN;}listener.moved();}else if(!moved&&!multi&&(dragged==null||((mode.equals("outer")||mode.equals("inner")||mode.equals("corners"))&&distance(dragged,x,y)>8*getResources().getDisplayMetrics().density))){double[] q=image(x,y);if(q[0]>=0&&q[1]>=0&&q[0]<bitmap.getWidth()&&q[1]<bitmap.getHeight()){
-                if(mode.equals("shaft")&&!proposals.isEmpty()){double best=18*getResources().getDisplayMetrics().density/scale();double[] selected=null;for(double[] l:proposals){double dx=l[2]-l[0],dy=l[3]-l[1],t=((q[0]-l[0])*dx+(q[1]-l[1])*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));double d=Math.hypot(q[0]-l[0]-t*dx,q[1]-l[1]-t*dy);if(d<best){best=d;selected=l;}}if(selected!=null){listener.proposal(selected);invalidate();return true;}}
+        if(e.getActionMasked()==MotionEvent.ACTION_UP){if(movingMark){if(Math.hypot(dragged[0]-dragOrigin[0],dragged[1]-dragOrigin[1])<1e-6)cancelMark();else{if(draggedObservation!=null){draggedObservation.source="manual correction";draggedObservation.confidence=Double.NaN;}movingMark=false;listener.moved();}}
+            else if(!moved&&!multi&&!readOnly&&draggedObservation!=null&&(mode.equals("select")||mode.equals("add")))listener.select(draggedObservation.id);
+            else if(!moved&&!multi&&(dragged==null||((mode.equals("outer")||mode.equals("inner")||mode.equals("corners"))&&distance(dragged,x,y)>8*getResources().getDisplayMetrics().density))){double[] q=image(x,y);if(q[0]>=0&&q[1]>=0&&q[0]<bitmap.getWidth()&&q[1]<bitmap.getHeight()){
+                if(!readOnly&&mode.equals("shaft")&&!proposals.isEmpty()){double best=18*getResources().getDisplayMetrics().density/scale();double[] selected=null;for(double[] l:proposals){double dx=l[2]-l[0],dy=l[3]-l[1],t=((q[0]-l[0])*dx+(q[1]-l[1])*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));double d=Math.hypot(q[0]-l[0]-t*dx,q[1]-l[1]-t*dy);if(d<best){best=d;selected=l;}}if(selected!=null){listener.proposal(selected);invalidate();return true;}}
                 if(!readOnly&&mode.equals("select")){double best=28*getResources().getDisplayMetrics().density;int chosen=-1;for(Store.Observation o:frame.observations){double d=distance(o.a,x,y);if(d<best){best=d;chosen=o.id;}}if(chosen>=0)listener.select(chosen);}
                 else if(!readOnly)listener.tap(q[0],q[1]);}}invalidate();performClick();return true;}
         return true;
     }
-    private void cancelMark(){if(movingMark&&dragged!=null&&dragOrigin!=null){dragged[0]=dragOrigin[0];dragged[1]=dragOrigin[1];}dragged=dragOrigin=null;movingMark=false;invalidate();}
+    private void cancelMark(){boolean started=movingMark;if(started&&dragged!=null&&dragOrigin!=null){dragged[0]=dragOrigin[0];dragged[1]=dragOrigin[1];}dragged=dragOrigin=null;draggedObservation=null;movingMark=false;if(started)listener.cancelMove();invalidate();}
     @Override public boolean performClick(){super.performClick();return true;}
 }

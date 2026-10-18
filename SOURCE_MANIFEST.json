@@ -12,8 +12,8 @@
     },
     {
       "path": "AndroidManifest.xml",
-      "bytes": 2375,
-      "sha256": "b197b44a34cc1bf128f2534441388ed84a00cae90f177ac33594cd7dcf5f7edf"
+      "bytes": 2372,
+      "sha256": "913140b05e8705706063ab5678a1acdb37619b0e4086de13902ddf79c55e014a"
     },
     {
       "path": "DEPENDENCIES.lock.json",
@@ -27,8 +27,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 16694,
-      "sha256": "60fa4eccd59468357f59ffd974f68c5620c4a50fd72db82ddc202bf1fe62c368"
+      "bytes": 17462,
+      "sha256": "1978ff342fc6faf3a5c8d35787144b1d2843ff70b1165158aa2c5f43232a0fb7"
     },
     {
       "path": "THIRD_PARTY.md",
@@ -277,8 +277,8 @@
     },
     {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 47134,
-      "sha256": "627b4c9525faa959fac06bdb001823f90d849c419427b32cb27742f18f8db5cc"
+      "bytes": 47346,
+      "sha256": "ba9c17ea0fb15b8e01fde0d08602ec90289326597d5b5fa08833f62b9af3b28e"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -287,8 +287,8 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignmentUi.java",
-      "bytes": 14805,
-      "sha256": "54a31d2672912fec4a7c6aed120a5558deacde10fdcffbe5b7af2b49437c6c0e"
+      "bytes": 16102,
+      "sha256": "6610a19a2ebb67a0854fda2860cdd03d49e3dde6562bb03075ce893b0a327b5e"
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignments.java",
@@ -302,8 +302,8 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoCanvas.java",
-      "bytes": 9760,
-      "sha256": "3cd8f53b510e15b09d3b45184ea246750eebcd51b469658aa6beb6e7cf5f1fab"
+      "bytes": 12481,
+      "sha256": "99c7a5fd60858774cdf23ba9b06e9f34f7b78ad0daf187d4f63ba39b4e608934"
     },
     {
       "path": "src/org/redwoodarrows/PhotoDetection.java",
@@ -562,8 +562,8 @@
     },
     {
       "path": "tests/SyncEngineTest.java",
-      "bytes": 14822,
-      "sha256": "33eb637eebaa9ea58eebd07156f1bcd07eca93767b2388d4362e4ce58846c76b"
+      "bytes": 18641,
+      "sha256": "a30858608df4b0a66c54dbb51d75ac5bf44ec627b9b451950f5cde0f69572150"
     },
     {
       "path": "tests/SyncWakeupTest.java",
