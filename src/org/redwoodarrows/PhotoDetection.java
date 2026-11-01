@@ -7,6 +7,11 @@ import java.util.*;
 /** Durable, per-photo work records. No model, camera, network or Activity here. */
 final class PhotoDetection {
     static final String AUTO="automatic photo proposal · ";
+    static boolean sameEntry(double[] a,double[] b,int photoWidth){
+        // Match the detector's 3-pixel review-space suppression, not a wider
+        // second pass that can silently discard a neighboring arrow.
+        return Math.hypot(a[0]-b[0],a[1]-b[1])*600.0/photoWidth<3;
+    }
     static File ownerFile(Store store){return new File(store.root.getParentFile(),"photo-detector-id");}
     static String owner(Store store,boolean create)throws IOException {
         synchronized(Store.FILE_LOCK){File file=ownerFile(store);
@@ -28,6 +33,9 @@ final class PhotoDetection {
     /** Called under the store lock. Rebase onto current labels and other photos,
      * never onto stale geometry; manually removed marks must stay removed. */
     static boolean complete(Store store,Task task,List<double[]> points,Geometry.Calibration proposal,boolean failed)throws Exception {
+        return complete(store,task,points,proposal,failed,"",Double.NaN);
+    }
+    static boolean complete(Store store,Task task,List<double[]> points,Geometry.Calibration proposal,boolean failed,String modelHash,double threshold)throws Exception {
         synchronized(Store.FILE_LOCK){
             if(task.group.id.equals(Store.editingGroupId))return false;
             File file=new File(new File(store.root,SyncFiles.id(task.group.id)),"group.json");if(!file.isFile())return false;
@@ -42,14 +50,16 @@ final class PhotoDetection {
             int id=0;for(Store.View v:latest.views)for(Store.Observation o:v.observations)id=Math.max(id,o.id);
             if(!failed)for(double[] point:points){
                 if(point.length<3||!Double.isFinite(point[0])||!Double.isFinite(point[1])||!Double.isFinite(point[2])||point[0]<0||point[1]<0||point[0]>=view.width||point[1]>=view.height||id>=999)continue;
-                boolean duplicate=false;for(Store.Observation o:view.observations)if(Math.hypot(o.a[0]-point[0],o.a[1]-point[1])<view.width*.012)duplicate=true;if(duplicate)continue;
+                boolean duplicate=false;for(Store.Observation o:view.observations)if(sameEntry(o.a,point,view.width))duplicate=true;if(duplicate)continue;
                 Store.Observation mark=new Store.Observation(++id,new double[]{point[0],point[1]},null);mark.source="impact-model:background-photo";mark.confidence=point[2];
                 mark.associationWarning="Automatic entry estimate; target and dot are unconfirmed. Different photos have not been matched as the same arrows.";view.observations.add(mark);
             }
             if(!failed&&proposal!=null&&!view.observations.isEmpty()&&Store.presetJson(latest.preset()).toString().equals(Store.presetJson(task.group.preset()).toString())){
                 view.calibration=TargetSelection.copy(proposal);view.calibration.reviewed=false;view.calibration.source=AUTO+proposal.source;
             }
-            view.detectionState=failed?"failed":"done";store.save(latest);return true;
+            view.detectionState=failed?"failed":"done";store.save(latest);
+            if(!failed)try{TrainingReviews.recordDetection(store,latest,view,points,modelHash,threshold);}catch(Exception ignored){/* Optional training history must not lose a saved photo. */}
+            return true;
         }
     }
     /** A single clearly dominant face may be previewed, never marked reviewed.

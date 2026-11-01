@@ -43,6 +43,7 @@ public final class Store {
             if(!detectionState.isEmpty())j.put("photo_detection",detectionState).put("photo_detection_owner",detectionOwner);
             if(pose!=null)j.put("camera_pose_row_major",array(pose));if(k!=null)j.put("intrinsics",array(k));
             if(calibration!=null)j.put("calibration",new JSONObject().put("h_image_to_radius",array(calibration.h)).put("radial_fit_rms_radius",Double.isFinite(calibration.rms)?calibration.rms:JSONObject.NULL).put("source",calibration.source).put("reviewed",calibration.reviewed));
+            if(calibration!=null&&!calibration.reviewLabel.isEmpty())j.getJSONObject("calibration").put("review_label",calibration.reviewLabel);
             JSONArray a=new JSONArray();for(Observation o:observations)a.put(o.json());j.put("observations",a);JSONArray rim=new JSONArray(),inside=new JSONArray();for(double[] p:rimMarks)rim.put(array(p));for(double[] p:innerMarks)inside.put(array(p));return j.put("rim_marks",rim).put("inner_marks",inside);
         }
         static View from(JSONObject j)throws JSONException {
@@ -50,7 +51,7 @@ public final class Store {
             v.cameraTimestamp=j.optLong("camera_timestamp_ns");
             v.detectionState=j.optString("photo_detection");v.detectionOwner=j.optString("photo_detection_owner");
             v.sourceHash=j.optString("source_sha256");if(!v.sourceHash.isEmpty()&&!v.sourceHash.matches("[a-f0-9]{64}"))throw new JSONException("Invalid source photo digest");v.capturedAt=Math.max(0,j.optLong("captured_at_ms"));
-            JSONObject c=j.optJSONObject("calibration");if(c!=null){v.calibration=new Geometry.Calibration(doubles(c.getJSONArray("h_image_to_radius")),c.optDouble("radial_fit_rms_radius"),c.optString("source"));v.calibration.reviewed=c.optBoolean("reviewed");}
+            JSONObject c=j.optJSONObject("calibration");if(c!=null){v.calibration=new Geometry.Calibration(doubles(c.getJSONArray("h_image_to_radius")),c.optDouble("radial_fit_rms_radius"),c.optString("source"));v.calibration.reviewed=c.optBoolean("reviewed");v.calibration.reviewLabel=c.optString("review_label");}
             JSONArray a=j.optJSONArray("observations");if(a!=null)for(int i=0;i<a.length();i++)v.observations.add(Observation.from(a.getJSONObject(i)));a=j.optJSONArray("rim_marks");if(a!=null)for(int i=0;i<a.length();i++)v.rimMarks.add(doubles(a.getJSONArray(i)));a=j.optJSONArray("inner_marks");if(a!=null)for(int i=0;i<a.length();i++)v.innerMarks.add(doubles(a.getJSONArray(i)));return v;
         }
         public double[] rotationMatrix(){return Geometry.imageRotation(rotation,rawWidth,rawHeight);}
@@ -61,6 +62,7 @@ public final class Store {
         public ShooterRoster.Person shooter=ShooterRoster.UNASSIGNED;
         public int diameterCm=35;public long created=System.currentTimeMillis();
         public TargetPreset target;
+        JSONObject photoReviews;
         Practice practice=new Practice();
         public final List<View> views=new ArrayList<>();
         // Captured when the grouping starts. Changing the global preference
@@ -89,6 +91,7 @@ public final class Store {
                 JSONArray cleanup=new JSONArray();for(String file:pendingPhotoCleanup)cleanup.put(file);
                 j.put("measurements_mm",measurements).put("source_view_count",sourceViewCount).put("pending_photo_cleanup",cleanup);
             }
+            if(photoReviews!=null&&photoReviews.length()>0)j.put("photo_reviews",new JSONObject(photoReviews.toString()));
             JSONArray a=new JSONArray();for(View v:views)a.put(v.json());return j.put("views",a).put("practice",practice.json());
         }
         static Group from(JSONObject j)throws JSONException {
@@ -105,7 +108,9 @@ public final class Store {
                     a=j.optJSONArray("pending_photo_cleanup");if(a!=null)for(int i=0;i<a.length();i++)g.pendingPhotoCleanup.add(a.getString(i));
                 }
             }
-            g.practice=Practice.from(j.optJSONObject("practice"));return g;
+            g.practice=Practice.from(j.optJSONObject("practice"));
+            if(j.has("photo_reviews")){g.photoReviews=new JSONObject(j.getJSONObject("photo_reviews").toString());if(g.photoReviews.length()>64)throw new JSONException("Too many photo reviews");}
+            return g;
         }
         public String title(){return name.isEmpty()?new SimpleDateFormat("MMM d · h:mm a",Locale.US).format(new Date(created)):name;}
     }
@@ -305,6 +310,7 @@ public final class Store {
         TreeSet<Integer> ids=new TreeSet<>();for(View v:g.views)for(Observation o:v.observations)ids.add(o.id);
         List<Result> out=new ArrayList<>();
         for(int id:ids){List<double[]> points=new ArrayList<>(),lines=new ArrayList<>();boolean unreviewed=false,neural=false;Set<String> seenLines=new HashSet<>(),seenPoints=new HashSet<>(),warnings=new LinkedHashSet<>();
+            if(g.preset().id.equals("offline-photo-unknown-target")){Result r=new Result();r.id=id;r.x=r.y=Double.NaN;r.method="not resolved";r.warning="Target size not set; placeholder dimensions are not measurements";out.add(r);continue;}
             for(View v:g.views){if(v.calibration==null)continue;for(Observation o:v.observations)if(o.id==id){if(!v.calibration.reviewed){unreviewed=true;continue;}try{double[] a=v.calibration.map(o.a[0],o.a[1]);if(o.line){if(seenLines.add(v.id))lines.add(Geometry.line(a,v.calibration.map(o.b[0],o.b[1])));}else if(seenPoints.add(v.id)){points.add(new double[]{a[0],a[1],Double.isFinite(o.confidence)?o.confidence:1.});neural|=o.source.startsWith("impact-model:");if(!o.associationWarning.isEmpty())warnings.add(o.associationWarning);}}catch(IllegalArgumentException ignored){}}}
             Result r=new Result();r.id=id;
             if(!points.isEmpty()){View reference=g.views.get(0);double bandwidth=neural&&reference.calibration!=null?Geometry.associationGate(reference.calibration,reference.width,reference.height)*.35:.02;double[] m=Geometry.robustMean(points,bandwidth);r.x=m[0]*g.radiusMm();r.y=m[1]*g.radiusMm();r.method=neural?(points.size()>1?"multi-view neural impact":"single-view neural impact"):(points.size()>1?"multi-view marked impact":"marked impact");r.views=points.size();r.rms=Geometry.spread(points)*g.radiusMm();if(r.rms>8)warnings.add("Impact marks disagree between views");r.warning=String.join(" · ",warnings);}

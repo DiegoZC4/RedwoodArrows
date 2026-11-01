@@ -51,3 +51,21 @@ Camera2 is used only to check flash availability; the app does not open a second
 camera or compete with ARCore using the system flashlight switch. Live Y-plane
 metering and its debounced/latching policy are small project code, not a new
 model, package or runtime dependency.
+
+## Review Toolbar Icons
+
+The review toolbar uses Lucide 0.468.0 icons, converted to Android vector
+drawables by `tools/fetch_review_icons.ps1`. Source:
+https://github.com/lucide-icons/lucide/tree/0.468.0
+The ISC license and attribution are included in `assets/licenses/LUCIDE.txt`.
+
+## Host-Only Impact Recovery
+
+`tools/recover_impact.py` uses **onnx2torch 1.5.15** (Apache-2.0),
+https://github.com/ENOT-AutoDL/onnx2torch, to reconstruct the shipped ONNX graph
+for local PyTorch training. ONNX (Apache-2.0), ONNX Runtime (MIT), PyTorch
+(BSD-style), and torchvision (BSD-3-Clause) are host-only development dependencies;
+none are added to the Android APK. Versions are pinned in
+`tools/impact_recovery_requirements.txt`. The reconstructed and derived weights
+retain the existing noncommercial/share-alike model attribution in
+`assets/licenses/IMPACT_DATASET.txt`; conversion does not change their license.

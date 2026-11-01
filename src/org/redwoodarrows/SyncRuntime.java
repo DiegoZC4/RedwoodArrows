@@ -15,22 +15,24 @@ public final class SyncRuntime extends Application {
     static volatile String status="Saved on this phone";
     static volatile boolean running,lastAttemptSucceeded;
     static volatile Runnable uiChanged;
+    static boolean enabled(Context c){return c.checkSelfPermission(android.Manifest.permission.INTERNET)==android.content.pm.PackageManager.PERMISSION_GRANTED;}
+    static SyncHttp http(Context c,String token){return new SyncHttp(token,c.getPackageName().equals("org.redwoodarrows.review"));}
     static File directory(Context c){return new File(c.getFilesDir(),"sync");}
     @Override public void onCreate(){super.onCreate();Context c=getApplicationContext();
-        Store.onChanged=()->{generation.incrementAndGet();if(new SyncSession(c).present()){status="Saved · waiting to sync";SyncJobs.schedule(c);notifyUi();}};
-        if(new SyncSession(c).present()){status="Saved · waiting to sync";SyncJobs.schedule(c);}
+        Store.onChanged=()->{generation.incrementAndGet();if(enabled(c)&&new SyncSession(c).present()){status="Saved · waiting to sync";SyncJobs.schedule(c);notifyUi();}};
+        if(enabled(c)&&new SyncSession(c).present()){status="Saved · waiting to sync";SyncJobs.schedule(c);}
     }
     static void notifyUi(){Runnable listener=uiChanged;if(listener!=null)listener.run();}
     /** Photos are already durable. Online intake can sync now, with the persisted
      * network-constrained job remaining as the offline/restart fallback. */
-    static void saved(Context context){Context c=context.getApplicationContext();if(!new SyncSession(c).present())return;SyncJobs.schedule(c);try{android.net.ConnectivityManager cm=(android.net.ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE);android.net.NetworkCapabilities caps=cm.getNetworkCapabilities(cm.getActiveNetwork());if(caps!=null&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))request(c,null);}catch(Exception ignored){/* The persisted job retries without blocking a local save. */}}
-    static SyncEngine engine(Context c,JSONObject session)throws Exception {return new SyncEngine(new Store(c),directory(c),new SyncHttp(session.getString("token")));}
+    static void saved(Context context){Context c=context.getApplicationContext();if(!enabled(c)||!new SyncSession(c).present())return;SyncJobs.schedule(c);try{android.net.ConnectivityManager cm=(android.net.ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE);android.net.NetworkCapabilities caps=cm.getNetworkCapabilities(cm.getActiveNetwork());if(caps!=null&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)&&caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))request(c,null);}catch(Exception ignored){/* The persisted job retries without blocking a local save. */}}
+    static SyncEngine engine(Context c,JSONObject session)throws Exception {return new SyncEngine(new Store(c),directory(c),http(c,session.getString("token")),c.getPackageName().equals("org.redwoodarrows.review"));}
     static synchronized Future<?> request(Context context,Runnable done){
         Context c=context.getApplicationContext();
         return network.submit(()->{
             long start=generation.get(),started=System.currentTimeMillis();running=true;lastAttemptSucceeded=false;SyncEngine engine=null;Exception failure=null;String phase="read_sign_in";
             try{
-                JSONObject session=new SyncSession(c).read();if(session==null){status="Saved on this phone";return;}
+                JSONObject session=enabled(c)?new SyncSession(c).read():null;if(session==null){status="Saved on this phone";return;}
                 status="Checking shared library…";notifyUi();engine=engine(c,session);
                 engine.progress=message->{status=message;notifyUi();};engine.run();lastAttemptSucceeded=true;
                 int conflicts=engine.conflicts().size();status=conflicts>0?conflicts+" edit conflict"+(conflicts==1?"":"s"):engine.state.optJSONObject("deferred").length()>0?"Saved · shared update waiting":generation.get()!=start?"Saved · waiting to sync":"Synced · just now";

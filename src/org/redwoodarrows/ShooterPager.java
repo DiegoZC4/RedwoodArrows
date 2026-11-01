@@ -21,8 +21,9 @@ final class ShooterPager extends View {
     private ValueAnimator animation;
     private int pointer=-1,drawBase,drawSteps;private float drawOffset;
     private boolean provisional;
-    // Owner identity uses pastels distinct from the lime primary-action colour.
+    // Owner identity matches each person's chart colour; these pastels are only a fallback outside the app.
     private static final int[] COLORS={0xffC6C4EA,0xffA4D0D0,0xffE7C295,0xffDDBAD0};
+    private int color(int i){return getContext() instanceof MainActivity?((MainActivity)getContext()).shooters.color(people.get(i)):COLORS[i%COLORS.length];}
 
     ShooterPager(Context context,List<ShooterRoster.Person> options,ShooterRoster.Person current,boolean provisional,String caption,Change change){
         super(context);this.people=new ArrayList<>(options);this.change=change;this.caption=caption;this.provisional=provisional;
@@ -46,7 +47,7 @@ final class ShooterPager extends View {
     private int drawIndex(int relative){return drawBase>=0?motion.wrap(drawBase+relative):relative==0?-1:motion.wrap(relative>0?relative-1:relative);}
     private void layer(Canvas c,int relative,float x,float y){
         int i=drawIndex(drawSteps+relative);c.save();c.translate(x,y);
-        paint.setColor(i<0?MainActivity.PANEL:COLORS[i%COLORS.length]);c.drawRect(0,0,getWidth(),getHeight(),paint);
+        paint.setColor(i<0?MainActivity.PANEL:color(i));c.drawRect(0,0,getWidth(),getHeight(),paint);
         text.setTextSize(14*getResources().getDisplayMetrics().scaledDensity);text.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));text.setTextAlign(Paint.Align.CENTER);text.setColor(i<0?MainActivity.FG:MainActivity.BG);
         boolean unconfirmed=provisional&&i==motion.selected;float badge=unconfirmed?Math.max(dp(22),14*getResources().getDisplayMetrics().scaledDensity):0;
         String clipped=TextUtils.ellipsize(label(i),text,Math.max(1,getWidth()-dp(8)-badge),TextUtils.TruncateAt.END).toString();

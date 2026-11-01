@@ -10,10 +10,14 @@ import java.util.*;
 final class SyncEngine {
     interface Transport {JSONObject json(String action,JSONObject input)throws Exception;void upload(String hash,File file)throws Exception;void download(String hash,File file,long size)throws Exception;}
     final Store store;final File directory,stateFile;final Transport remote;JSONObject state,entries;int uploaded,downloaded;
+    final boolean reviewRecords;
     String phase="starting";java.util.function.Consumer<String> progress;
     private void progress(String next,String message){phase=next;if(progress!=null)progress.accept(message);}
     SyncEngine(Store store,File directory,Transport remote)throws Exception {
-        this.store=store;this.directory=directory;this.remote=remote;directory.mkdirs();stateFile=new File(directory,"state.json");
+        this(store,directory,remote,false);
+    }
+    SyncEngine(Store store,File directory,Transport remote,boolean reviewRecords)throws Exception {
+        this.store=store;this.directory=directory;this.remote=remote;this.reviewRecords=reviewRecords;directory.mkdirs();stateFile=new File(directory,"state.json");
         state=stateFile.isFile()?new JSONObject(SyncFiles.read(stateFile)):new JSONObject().put("cursor",0).put("entries",new JSONObject());entries=state.getJSONObject("entries");
     }
     void bind(String library)throws Exception {
@@ -24,7 +28,7 @@ final class SyncEngine {
     private JSONObject entry(String id)throws Exception {JSONObject e=entries.optJSONObject(id);if(e==null){e=new JSONObject().put("revision",0).put("fingerprint","");entries.put(id,e);}return e;}
     private void ack(String id,long revision,String fingerprint)throws Exception {entries.put(id,new JSONObject().put("revision",revision).put("fingerprint",fingerprint));persist();}
     private File groupFile(String id)throws Exception {return new File(new File(store.root,SyncFiles.id(id)),"group.json");}
-    private SyncFiles.Snapshot local(String id)throws Exception {synchronized(Store.FILE_LOCK){File f=groupFile(id);return f.isFile()?SyncFiles.snapshot(store,store.read(f)):null;}}
+    private SyncFiles.Snapshot local(String id)throws Exception {synchronized(Store.FILE_LOCK){File f=groupFile(id);return f.isFile()?SyncFiles.snapshot(store,store.read(f),reviewRecords):null;}}
     private void conflict(String id,JSONObject wire)throws Exception {SyncFiles.atomic(new File(directory,"conflict-"+SyncFiles.id(id)+".json"),wire.toString());}
     private File conflictFile(String id)throws Exception {return new File(directory,"conflict-"+SyncFiles.id(id)+".json");}
     private void clearConflict(String id)throws Exception {File f=conflictFile(id);if(f.exists()&&!f.delete())throw new IOException("Could not clear the resolved conflict");}

@@ -10,22 +10,25 @@ import java.util.function.Consumer;
 
 /** Group snapshots carry stable shooter IDs between phones; login is not shooter. */
 final class ShootersUi {
-    private final MainActivity a;private final SharedPreferences preferences;
+    private final MainActivity a;private final SharedPreferences preferences,colorPreferences;private final ShooterColors colors;
     ShooterRoster roster=new ShooterRoster();private String loadError="";
     String filter=ShooterRoster.ALL;
     ShootersUi(MainActivity activity){
-        a=activity;preferences=a.getPreferences(0);
+        a=activity;preferences=a.getPreferences(0);colorPreferences=a.getSharedPreferences("shooter-colors",0);colors=new ShooterColors(colorPreferences.getAll());
         try{roster=ShooterRoster.from(preferences.getString("shooter_roster",""));}catch(Exception e){loadError="Shooter profiles could not be read. The saved profile data has been preserved; no profile changes will be written. "+e.getMessage();}
         // Group snapshots also work after restoring a group without preferences.
-        for(Store.Group group:a.store.list())roster.remember(group.shooter);
+        for(Store.Group group:a.libraryGroups())roster.remember(group.shooter);
+        rememberColors();
         filter=preferences.getString("shooter_filter",ShooterRoster.ALL);
         if(!filter.equals(ShooterRoster.ALL)&&roster.find(filter)==null)filter=ShooterRoster.ALL;
     }
     ShooterRoster.Person active(){return roster.active();}
+    int color(ShooterRoster.Person person){return colors.color(person);}
+    private void rememberColors(){if(colors.remember(roster.all())){SharedPreferences.Editor edit=colorPreferences.edit();for(Map.Entry<String,Integer> entry:colors.snapshot().entrySet())edit.putInt(entry.getKey(),entry.getValue());edit.apply();}}
     String label(Store.Group group){return roster.resolve(group.shooter).label();}
     boolean commit(ShooterRoster changed){
         if(!loadError.isEmpty()){a.message(loadError);return false;}
-        try{if(!preferences.edit().putString("shooter_roster",changed.json().toString()).commit())throw new IllegalStateException("Could not save shooter profiles");roster=changed;return true;}
+        try{if(!preferences.edit().putString("shooter_roster",changed.json().toString()).commit())throw new IllegalStateException("Could not save shooter profiles");roster=changed;rememberColors();return true;}
         catch(Exception e){a.message(e.getMessage());return false;}
     }
     boolean selectActive(String id){
@@ -33,7 +36,7 @@ final class ShootersUi {
         try{ShooterRoster copy=roster.copy();copy.select(id);if(!commit(copy))return false;return preferences.edit().putString("capture_shooter_override",id).commit();}catch(Exception e){a.message(e.getMessage());return false;}
     }
     ShooterRoster.Person next(List<Store.Group> history){return CaptureDefaults.next(roster,history,preferences.contains("capture_shooter_override")?preferences.getString("capture_shooter_override",""):null);}
-    ShooterRoster.Person next(){return next(a.store.list());}
+    ShooterRoster.Person next(){return next(a.libraryGroups());}
     void captured(Store.Group group){preferences.edit().remove("capture_shooter_override").remove("practice_next:"+group.shooter.id).apply();}
     void pickForCapture(Consumer<ShooterRoster.Person> chosen){pick("Who shot this grouping?",ShooterRoster.UNASSIGNED,chosen);}
     void addHomeControls(LinearLayout body){
@@ -80,6 +83,13 @@ final class ShootersUi {
         }));dialog.show();input.requestFocus();dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
     String filterLabel(){return filter.equals(ShooterRoster.ALL)?"All shooters":roster.find(filter)==null?"Unassigned":roster.find(filter).label();}
+    boolean setFilter(String id){
+        if(!id.equals(ShooterRoster.ALL)&&roster.find(id)==null)return false;
+        if(id.equals(filter))return true;
+        if(!preferences.edit().putString("shooter_filter",id).commit()){a.message("Could not save the shooter filter");return false;}
+        filter=id;a.groupGridState=null;a.bulkSelection.clear();a.bulkNotice="";
+        a.groupingDay=LibraryFilter.availableDay(a.groupingDay,a.libraryGroups(),id);return true;
+    }
     void chooseFilter(List<Store.Group> groups){
         List<String> ids=new ArrayList<>();ids.add(ShooterRoster.ALL);ids.add("");for(ShooterRoster.Person p:roster.all())ids.add(p.id);
         String[] labels=new String[ids.size()];int selected=0;
@@ -88,7 +98,7 @@ final class ShootersUi {
             labels[i]=(id.equals(ShooterRoster.ALL)?"All shooters":roster.find(id).label())+" · "+count;if(id.equals(filter))selected=i;
         }
         new AlertDialog.Builder(a).setTitle("Saved groupings by shooter").setSingleChoiceItems(labels,selected,(d,which)->{
-            if(preferences.edit().putString("shooter_filter",ids.get(which)).commit()){filter=ids.get(which);d.dismiss();a.home();}else a.message("Could not save the history filter");
+            if(setFilter(ids.get(which))){d.dismiss();a.refreshShooterLabels();}
         }).setNegativeButton("Cancel",null).show();
     }
 }

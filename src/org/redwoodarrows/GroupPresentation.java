@@ -20,12 +20,14 @@ final class GroupPresentation {
     }
     String date(){return new SimpleDateFormat("MMM d · h:mm a",Locale.US).format(new Date(group.created));}
     String caption(){String name=shortName();return name.isEmpty()?"Grouping":name;}
-    String count(){int total=Math.max(results.size(),group.practice.fired);return located==total?located+" arrows":located+" / "+total+" located";}
+    String count(){int total=Math.max(results.size(),group.practice.fired);return located==total?located+" arrows":located+" / "+total+" measured";}
     boolean provisionalOwner(){for(String s:warnings)if(s.toLowerCase(Locale.US).contains("shooter provisional"))return true;return false;}
-    String status(){return located==0?"Not measured":provisionalOwner()?"Estimate · shooter unconfirmed":unresolved>0?"Estimate · "+unresolved+" unresolved":"Estimated positions";}
+    String status(){return located==0?"Not measured":provisionalOwner()?"Estimate · shooter unconfirmed":unresolved>0?"Estimate · "+unresolved+" not measured":"Estimated positions";}
+    static double centerDistance(Store.Result result){return Double.isFinite(result.x)&&Double.isFinite(result.y)?Math.hypot(result.x,result.y):Double.NaN;}
+    static String coordinateLabel(Store.Result result){return Double.isFinite(centerDistance(result))?String.format(Locale.US,"#%d  %.1f mm from center\nx %+.1f  y %+.1f mm",result.id,centerDistance(result),result.x,result.y):"#"+result.id+"  Not measured";}
     String coordinateTable(){
-        StringBuilder s=new StringBuilder("Arrow      x mm      y mm\n");
-        for(Store.Result r:results)s.append(Double.isFinite(r.x)&&Double.isFinite(r.y)?String.format(Locale.US,"#%-5d  %+8.1f  %+8.1f\n",r.id,r.x,r.y):String.format(Locale.US,"#%-5d  unresolved\n",r.id));
+        StringBuilder s=new StringBuilder("Arrow   Center mm     x mm     y mm\n");
+        for(Store.Result r:results)s.append(Double.isFinite(centerDistance(r))?String.format(Locale.US,"#%-5d  %8.1f  %+7.1f  %+7.1f\n",r.id,centerDistance(r),r.x,r.y):String.format(Locale.US,"#%-5d  unresolved\n",r.id));
         return s.toString();
     }
     String details(){

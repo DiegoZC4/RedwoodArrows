@@ -4,6 +4,7 @@ The process, temporary credentials, photos and database are cleaned in finally.
 Only loopback is allowed. No personal data or production service is touched.
 """
 import base64
+from contextlib import closing
 import hashlib
 import json
 import os
@@ -18,6 +19,34 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def run_two_phones(server, credentials, photo, reviewed=False):
+    settings = {'endpoint': server.url, 'owner': credentials[0], 'member': credentials[1],
+                'photo': base64.b64encode(photo).decode(), 'reviewed': reviewed}
+    adb, device = os.environ.get('REDWOOD_TEST_ADB'), os.environ.get('REDWOOD_TEST_DEVICE')
+    if adb and device:
+        command = [adb, '-s', device]
+        assigned = subprocess.check_output(command + ['reverse', 'tcp:0', f'tcp:{server.port}'], text=True).strip()
+        if not assigned.isdigit() or not 1 <= int(assigned) <= 65535:
+            raise RuntimeError('ADB did not allocate a test port')
+        port = f'tcp:{assigned}'
+        settings['endpoint'] = f'http://127.0.0.1:{assigned}/api.php'
+        try:
+            subprocess.run(command + ['shell', 'app_process', '-Djava.io.tmpdir=/data/local/tmp/redwood-review-tests',
+                           '-cp', '/data/local/tmp/redwood-review-tests/tests.jar', '/system/bin',
+                           'org.redwoodarrows.SyncEngineTest'], input=json.dumps(settings).encode(), check=True, timeout=180)
+        finally:
+            subprocess.run(command + ['reverse', '--remove', port], check=True, capture_output=True)
+    else:
+        sdk = os.environ.get('ANDROID_HOME', '/Users/diego/Library/Android/sdk')
+        jdk = os.environ.get('JAVA_HOME', '/Applications/Android Studio.app/Contents/jbr/Contents/Home')
+        cp = os.pathsep.join(['build/shooter-tests', 'deps/test/json-20240303.jar',
+                             f'{sdk}/platforms/android-34/android.jar', 'deps/commons-math3.jar'])
+        if not (ROOT / 'build/shooter-tests/org/redwoodarrows/SyncEngineTest.class').is_file():
+            raise RuntimeError('Compile SyncEngineTest before running the server suite')
+        subprocess.run([str(Path(jdk) / 'bin/java'), '-cp', cp, 'org.redwoodarrows.SyncEngineTest'],
+                       cwd=ROOT, input=json.dumps(settings).encode(), check=True, timeout=180)
 
 
 class Server:
@@ -104,7 +133,7 @@ def run():
         check(all(u['expires'] == 0 for u in users), 'New sign-ins have no routine expiration')
         # Simulate an active 90-day session issued by the previous release and
         # an already-expired one. The migration must retain only valid access.
-        with sqlite3.connect(server.private / 'library.sqlite') as db:
+        with closing(sqlite3.connect(server.private / 'library.sqlite')) as db, db:
             owner_id = db.execute('SELECT user_id FROM tokens WHERE hash=?', (hashlib.sha256(owner.encode()).hexdigest(),)).fetchone()[0]
             expired = 'b'*64
             db.execute('UPDATE tokens SET expires=? WHERE hash=?', (int(time.time())+90*86400, hashlib.sha256(owner.encode()).hexdigest()))
@@ -183,22 +212,46 @@ def run():
         group['views'] = []
         check(server.call('save', wire(group, updated['revision'], []), owner)[0] == 200, 'Coordinate-only update')
         check(server.call('photo&hash='+h, token=member)[1] == photo, 'Removing local image references never deletes shared historical photos')
+        def reviewed(action, body=None, token=owner):
+            return server.call(action + '&collection=review', body, token)
+
+        def original_history():
+            with closing(sqlite3.connect(server.private / 'library.sqlite')) as database:
+                return (database.execute('SELECT * FROM groups ORDER BY id').fetchall(),
+                        database.execute('SELECT * FROM versions ORDER BY revision').fetchall())
+
+        before_review = original_history()
+        check(reviewed('health')[0] == 503, 'Reviewed collection is opt-in, not an automatic migration')
+        subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'enable-review', str(server.private)])
+        subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'enable-review', str(server.private)])
+        check(original_history() == before_review, 'Enabling reviewed collection twice preserves all original history')
+        check(reviewed('health')[1]['collection'] == 'review', 'Capability identifies the selected collection')
+        check(reviewed('me')[1]['library'] != server.call('me', token=owner)[1]['library'], 'Collections have distinct client binding identities')
+        check(reviewed('changes')[1]['changes'] == [], 'Reviewed library starts empty without copying or replacing old rounds')
+        check(reviewed('changes', token='')[0] == 401, 'Reviewed library remains authenticated')
+        check(server.call('health&collection=review_groups%3BDELETE')[0] == 400, 'Collection names cannot inject SQL')
+        reviewed_group = dict(group, name='Reviewed current copy', views=[{'file': 'fixture.jpg'}], photo_reviews={'fixture': {'fixture': True}})
+        reviewed_wire = wire(reviewed_group, 0)
+        status, review_saved = reviewed('save', reviewed_wire)
+        check(status == 200, 'Reviewed collection accepts a corrected copy with the same original grouping ID')
+        check(reviewed('group&id=fixture', token=member)[1]['body'] == reviewed_wire['body'], 'Other phone receives complete reviewed metadata')
+        check(original_history() == before_review, 'Reviewed save never changes original groups or historical versions')
+        check(reviewed('save', dict(reviewed_wire, fingerprint='a'*64))[0] == 400, 'Reviewed metadata still requires a valid checksum')
+        reviewed_group['name'] = 'Another correction'
+        check(reviewed('save', wire(reviewed_group, 0))[0] == 409, 'Reviewed edits retain optimistic concurrency protection')
+        check(reviewed('release')[0] == 503, 'Reviewed collection cannot offer the wrong original APK')
         # Exercise the Android sync engine against this real server with two
         # independent filesystem stores, credentials supplied only through stdin.
-        sdk = os.environ.get('ANDROID_HOME', '/Users/diego/Library/Android/sdk')
-        jdk = os.environ.get('JAVA_HOME', '/Applications/Android Studio.app/Contents/jbr/Contents/Home')
-        cp = f'build/shooter-tests:deps/test/json-20240303.jar:{sdk}/platforms/android-34/android.jar:deps/commons-math3.jar'
-        java = str(Path(jdk) / 'bin/java')
-        if not (ROOT / 'build/shooter-tests/org/redwoodarrows/SyncEngineTest.class').is_file():
-            raise RuntimeError('Compile SyncEngineTest before running the server suite')
-        if True:
+        for use_reviewed in (False, True):
             with Server() as two_phones:
+                if use_reviewed:
+                    subprocess.check_output(['php', str(ROOT/'server/cli.php'), 'enable-review', str(two_phones.private)])
                 credentials = []
                 for username, key in [('alex', 'diego_invite'), ('sam', 'iris_invite')]:
                     status, account = two_phones.call('signup', {'username': username, 'password': 'test-only long passphrase', 'invite': two_phones.invites[key]})
                     assert status == 200
                     credentials.append(account['token'])
-                subprocess.run([java, '-cp', cp, 'org.redwoodarrows.SyncEngineTest'], cwd=ROOT, input=json.dumps({'endpoint': two_phones.url, 'owner': credentials[0], 'member': credentials[1], 'photo': base64.b64encode(photo).decode()}).encode(), check=True, timeout=120)
+                run_two_phones(two_phones, credentials, photo, use_reviewed)
         check(server.call('password', {'old_password': 'wrong', 'password': 'next test passphrase'}, owner)[0] == 403, 'Password change requires old password')
         status, replacement = server.call('password', {'old_password': 'test-only long passphrase', 'password': 'next test passphrase'}, owner)
         check(status == 200, 'Password changed')

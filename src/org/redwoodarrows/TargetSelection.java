@@ -7,7 +7,7 @@ import java.util.*;
 final class TargetSelection {
     static final String PREFIX="chosen target · ";
     static boolean locked(Store.Group g){return !g.views.isEmpty()&&g.views.get(0).calibration!=null&&g.views.get(0).calibration.source.startsWith(PREFIX);}
-    static Geometry.Calibration copy(Geometry.Calibration c){Geometry.Calibration r=new Geometry.Calibration(c.h.clone(),c.rms,c.source);r.reviewed=c.reviewed;return r;}
+    static Geometry.Calibration copy(Geometry.Calibration c){Geometry.Calibration r=new Geometry.Calibration(c.h.clone(),c.rms,c.source);r.reviewed=c.reviewed;r.reviewLabel=c.reviewLabel;return r;}
     /** Require a tap near the bull, never silently choose a distant target. */
     static int nearest(List<Geometry.Calibration> candidates,double x,double y){
         int selected=-1;double best=.48;

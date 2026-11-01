@@ -16,15 +16,16 @@ final class PhotoDetectionRuntime {
     // Package-private injection for bounded, offline concurrency regression tests.
     interface Detector {Output detect(Context context,Store store,PhotoDetection.Task task)throws Exception;}
     static final class Output {
-        final List<double[]> points;final Geometry.Calibration calibration;
-        Output(List<double[]> p,Geometry.Calibration c){points=p;calibration=c;}
+        final List<double[]> points;final Geometry.Calibration calibration;final String modelHash;final double threshold;
+        Output(List<double[]> p,Geometry.Calibration c){this(p,c,"",Double.NaN);}
+        Output(List<double[]> p,Geometry.Calibration c,String hash,double cutoff){points=p;calibration=c;modelHash=hash;threshold=cutoff;}
     }
     static volatile Detector testDetector;
     static Output detect(Context context,Store store,PhotoDetection.Task task)throws Exception {
         Bitmap image=store.bitmap(task.group,task.view);if(image==null)throw new IllegalArgumentException("Photo unavailable");
         try{if(detector==null)detector=ImpactVision.fromAssets(context);List<double[]> points=detector.detect(image).points;List<Geometry.Calibration> candidates=new ArrayList<>();
             if(!points.isEmpty())try{for(Vision.Rings r:Vision.ringCandidates(image,task.group.type))candidates.add(r.calibration);}catch(IllegalArgumentException ignored){}
-            return new Output(points,PhotoDetection.target(candidates,points));
+            return new Output(points,PhotoDetection.target(candidates,points),detector.modelSha256,detector.threshold);
         }finally{image.recycle();}
     }
     /** Best-effort wakeup only. The pending record was committed with the photo. */
@@ -36,7 +37,7 @@ final class PhotoDetectionRuntime {
                 Store store=new Store(c);for(PhotoDetection.Task task:PhotoDetection.pending(store)){
                     if(task.group.id.equals(Store.editingGroupId))continue;
                     Output output=null;boolean failed=false;try{Detector fake=testDetector;output=fake==null?detect(c,store,task):fake.detect(c,store,task);}catch(Exception e){failed=true;android.util.Log.w("RedwoodArrows","Detection unavailable; original photo and labels kept",e);}
-                    try{if(PhotoDetection.complete(store,task,output==null?Collections.emptyList():output.points,output==null?null:output.calibration,failed)){
+                    try{if(PhotoDetection.complete(store,task,output==null?Collections.emptyList():output.points,output==null?null:output.calibration,failed,output==null?"":output.modelHash,output==null?Double.NaN:output.threshold)){
                         generation.incrementAndGet();Runnable listener=uiChanged;if(listener!=null)listener.run();SyncRuntime.saved(c);
                     }}catch(Exception e){android.util.Log.w("RedwoodArrows","Photo detection commit deferred",e);}
                 }

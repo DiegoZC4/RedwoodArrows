@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-31",
+  "result": "No candidate passed the predeclared validation selection rule",
+  "training_complete": true,
+  "training_photos": 159,
+  "validation_photos": 72,
+  "validation_days": [
+    "2026-10-07",
+    "2026-10-12"
+  ],
+  "split_policy": "Whole shooting days; group, round and source-image identities cannot cross splits",
+  "original_model_training_overlap_unknown": true,
+  "candidate_checkpoints": 6,
+  "thresholds_per_checkpoint": 12,
+  "selection_rule": "More true entries without more false dots than baseline; then highest F1",
+  "baseline": {
+    "tp": 293,
+    "fp": 75,
+    "fn": 134,
+    "precision": 0.7961956521739131,
+    "recall": 0.6861826697892272,
+    "f1": 0.7371069182389937,
+    "mean_error_px": 1.0551548135207638,
+    "median_error_px": 0.7008334044368157,
+    "p95_error_px": 3.64469682439685,
+    "photos": 72,
+    "scored_photos": 72,
+    "unscored_photos": 0,
+    "ignored": 0,
+    "exact_photos": 10,
+    "exact_eligible_photos": 72,
+    "exact_photo_rate": 0.1388888888888889
+  },
+  "highest_f1_candidate": {
+    "run": "anchored",
+    "checkpoint": "step-500.onnx",
+    "model_sha256": "5f3e0e354cd95cce64fb9a8ae7748e7c89138321ba9ae99414e2ee93af551b8d",
+    "threshold": 0.2,
+    "metrics": {
+      "tp": 292,
+      "fp": 65,
+      "fn": 135,
+      "precision": 0.8179271708683473,
+      "recall": 0.6838407494145199,
+      "f1": 0.7448979591836735,
+      "mean_error_px": 1.214186652619255,
+      "median_error_px": 0.8197124512993506,
+      "p95_error_px": 3.7644431730437424,
+      "photos": 72,
+      "scored_photos": 72,
+      "unscored_photos": 0,
+      "ignored": 0,
+      "exact_photos": 9,
+      "exact_eligible_photos": 72,
+      "exact_photo_rate": 0.125
+    }
+  },
+  "holdout": {
+    "eligible_photos": 38,
+    "evaluated": false,
+    "exclusion": "One subsequently corrected occluded-entry photo removed before held-out inference"
+  },
+  "deployed": false,
+  "active_model_sha256": "dd6b558f936e89b427330ea7bcbada2d2149b048befaf732000215d2417451d8",
+  "active_threshold": 0.16,
+  "saved_dots_modified": false,
+  "report_sha256": "25c4f77e2dab816721db14ca5d224f4a31054bbe6ddde06b98de28e39e9aff5c",
+  "manifest_sha256": "948c62bd73f32c944100ca906cc519838926804891d3520a251a0c0bc20cf708",
+  "labels_sha256": "83612baf97dbb9c6ad648cee5fdd3fb6d36e61691296159e3d6f8f0394f7be72",
+  "next_step": "Keep the current detector. Retain reviewed labels for a future controlled experiment; do not use an arrow-count quota."
+}

@@ -1,18 +1,34 @@
 <?php
 declare(strict_types=1);
 
-/** Private, invite-only, single-library sync. No cookies or public photo URLs. */
+/** Private, invite-only sync. No cookies or public photo URLs. */
 final class RedwoodError extends RuntimeException {
     public function __construct(public int $status, string $message) { parent::__construct($message); }
 }
 final class Redwood {
     public PDO $db;
+    private string $groupsTable;
+    private string $versionsTable;
     public const PHOTO_LIMIT = 8388608;
     public const DOCUMENT_LIMIT = 1048576;
-    public function __construct(public string $directory) {
+    public function __construct(public string $directory, public string $collection='original') {
+        if(!in_array($collection,['original','review'],true))throw new RedwoodError(400,'Unknown library collection');
         if (!is_dir($directory) || !is_file($directory.'/library.sqlite')) throw new RedwoodError(503, 'Library not initialized');
         $this->db = new PDO('sqlite:'.$directory.'/library.sqlite', null, null, [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
         $this->db->exec('PRAGMA busy_timeout=10000; PRAGMA foreign_keys=ON;');
+        $this->groupsTable=$collection==='review'?'review_groups':'groups';
+        $this->versionsTable=$collection==='review'?'review_versions':'versions';
+        if($collection==='review'&&!$this->reviewEnabled())throw new RedwoodError(503,'The reviewed library needs a server update. The original library is unchanged.');
+    }
+    public function reviewEnabled(): bool {return ($this->one("SELECT value FROM meta WHERE key='review_collection'")['value']??'')==='1';}
+    public function enableReview(): array {
+        return $this->transaction(function(){
+            $this->db->exec('CREATE TABLE IF NOT EXISTS review_versions (revision INTEGER PRIMARY KEY AUTOINCREMENT, group_id TEXT NOT NULL, fingerprint TEXT NOT NULL, body TEXT NOT NULL, photos TEXT NOT NULL, author TEXT NOT NULL REFERENCES users(id), modified INTEGER NOT NULL);
+                CREATE INDEX IF NOT EXISTS review_version_group ON review_versions(group_id,revision);
+                CREATE TABLE IF NOT EXISTS review_groups (id TEXT PRIMARY KEY, revision INTEGER NOT NULL REFERENCES review_versions(revision));');
+            $this->execute("INSERT INTO meta(key,value) VALUES ('review_collection','1') ON CONFLICT(key) DO UPDATE SET value='1'");
+            return ['collection'=>'review','groups'=>(int)$this->one('SELECT COUNT(*) n FROM review_groups')['n'],'original_groups'=>(int)$this->one('SELECT COUNT(*) n FROM groups')['n']];
+        });
     }
     public static function initialize(string $directory): array {
         if (file_exists($directory.'/library.sqlite')) throw new RuntimeException('Already initialized; existing data was not changed');
@@ -76,7 +92,7 @@ final class Redwood {
             return ['policy'=>'until_revoked_v1','active_sessions_migrated'=>$changed];
         });
     }
-    public function identity(array $user): array {return ['library'=>$this->one("SELECT value FROM meta WHERE key='library'")['value'],'username'=>$user['username'],'role'=>$user['role']];}
+    public function identity(array $user): array {return ['library'=>$this->one("SELECT value FROM meta WHERE key='library'")['value'].($this->collection==='review'?':review':''),'collection'=>$this->collection,'username'=>$user['username'],'role'=>$user['role']];}
     private static function password(string $password): void {if(strlen($password)<12||strlen($password)>128)throw new RedwoodError(400,'Use a password of 12–128 characters');}
     public function account(string $action,array $input,string $ip): array {
         $username=strtolower(trim((string)($input['username']??'')));$password=(string)($input['password']??'');
@@ -105,12 +121,12 @@ final class Redwood {
     public static function id(string $id): string {if(!preg_match('/^[A-Za-z0-9_-]{1,80}$/D',$id))throw new RedwoodError(400,'Invalid grouping ID');return $id;}
     public static function hash(string $hash): string {if(!preg_match('/^[a-f0-9]{64}$/D',$hash))throw new RedwoodError(400,'Invalid photo hash');return $hash;}
     public function group(string $id): array {
-        $row=$this->one('SELECT v.* FROM groups g JOIN versions v ON g.revision=v.revision WHERE g.id=?',[self::id($id)]);
+        $row=$this->one("SELECT v.* FROM {$this->groupsTable} g JOIN {$this->versionsTable} v ON g.revision=v.revision WHERE g.id=?",[self::id($id)]);
         if(!$row)throw new RedwoodError(404,'Grouping not found');
         return ['id'=>$id,'revision'=>(int)$row['revision'],'fingerprint'=>$row['fingerprint'],'body'=>$row['body'],'photos'=>json_decode($row['photos'],true,64,JSON_THROW_ON_ERROR)];
     }
     public function changes(int $cursor): array {
-        $s=$this->db->prepare('SELECT id,revision FROM groups WHERE revision>? ORDER BY revision LIMIT 50');$s->execute([$cursor]);
+        $s=$this->db->prepare("SELECT id,revision FROM {$this->groupsTable} WHERE revision>? ORDER BY revision LIMIT 50");$s->execute([$cursor]);
         $items=[];while($r=$s->fetch(PDO::FETCH_ASSOC))$items[]=['id'=>$r['id'],'revision'=>(int)$r['revision']];
         return ['changes'=>$items];
     }
@@ -144,14 +160,14 @@ final class Redwood {
         $fingerprint=hash('sha256',$body."\n".implode("\n",array_map(fn($p)=>$p['file'].':'.$p['sha256'].':'.$p['bytes'],$clean)));
         if(!hash_equals($fingerprint,(string)($input['fingerprint']??'')))throw new RedwoodError(400,'Grouping checksum mismatch');
         return $this->transaction(function()use($id,$body,$clean,$base,$fingerprint,$user){
-            $old=$this->one('SELECT v.* FROM groups g JOIN versions v ON g.revision=v.revision WHERE g.id=?',[$id]);
+            $old=$this->one("SELECT v.* FROM {$this->groupsTable} g JOIN {$this->versionsTable} v ON g.revision=v.revision WHERE g.id=?",[$id]);
             if($old&&hash_equals($old['fingerprint'],$fingerprint))return ['revision'=>(int)$old['revision'],'fingerprint'=>$fingerprint];
             if(($old?(int)$old['revision']:0)!==$base)throw new RedwoodError(409,'Both phones changed this grouping; neither version was overwritten');
             // Photo IDs are immutable, including across historical revisions.
-            $s=$this->db->prepare('SELECT photos FROM versions WHERE group_id=?');$s->execute([$id]);
+            $s=$this->db->prepare("SELECT photos FROM {$this->versionsTable} WHERE group_id=?");$s->execute([$id]);
             while($row=$s->fetch(PDO::FETCH_ASSOC)){foreach(json_decode($row['photos'],true) as $prior)foreach($clean as $p)if($prior['file']===$p['file']&&$prior['sha256']!==$p['sha256'])throw new RedwoodError(409,'A photo ID cannot be reused for different pixels');}
-            $this->execute('INSERT INTO versions(group_id,fingerprint,body,photos,author,modified) VALUES (?,?,?,?,?,?)',[$id,$fingerprint,$body,json_encode($clean,JSON_THROW_ON_ERROR),$user['id'],time()]);
-            $revision=(int)$this->db->lastInsertId();$this->execute('INSERT INTO groups VALUES (?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision',[$id,$revision]);
+            $this->execute("INSERT INTO {$this->versionsTable}(group_id,fingerprint,body,photos,author,modified) VALUES (?,?,?,?,?,?)",[$id,$fingerprint,$body,json_encode($clean,JSON_THROW_ON_ERROR),$user['id'],time()]);
+            $revision=(int)$this->db->lastInsertId();$this->execute("INSERT INTO {$this->groupsTable} VALUES (?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision",[$id,$revision]);
             return ['revision'=>$revision,'fingerprint'=>$fingerprint];
         });
     }
@@ -172,7 +188,7 @@ final class Redwood {
         }finally{if(is_file($temp))unlink($temp);}
     }
     public function dispatch(string $action,string $method,array $input,array $query,string $token,string $ip): array {
-        if($action==='health'&&$method==='GET')return ['service'=>'Redwood Arrows','protocol'=>1,'private'=>true];
+        if($action==='health'&&$method==='GET')return ['service'=>'Redwood Arrows','protocol'=>1,'private'=>true,'collection'=>$this->collection,'review_records'=>$this->collection==='review'];
         if(in_array($action,['signup','login'],true)&&$method==='POST')return $this->account($action,$input,$ip);
         $user=$this->authenticate($token);
         if($action==='me'&&$method==='GET')return $this->identity($user);
@@ -202,11 +218,12 @@ function redwood_http(string $directory): void {
     header('Cache-Control: no-store, private');header('X-Content-Type-Options: nosniff');header('Referrer-Policy: no-referrer');header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
     try {
         if(($_SERVER['HTTPS']??'')!=='on'&&getenv('REDWOOD_TEST_HTTP')!=='1')throw new RedwoodError(403,'HTTPS is required');
-        $app=new Redwood($directory);$action=(string)($_GET['action']??'health');$method=$_SERVER['REQUEST_METHOD'];
+        $app=new Redwood($directory,(string)($_GET['collection']??'original'));$action=(string)($_GET['action']??'health');$method=$_SERVER['REQUEST_METHOD'];
         $auth=$_SERVER['HTTP_AUTHORIZATION']??$_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'';
         $token=str_starts_with($auth,'Bearer ')?substr($auth,7):'';
         if($action==='apk'||$action==='release'){
             $app->authenticate($token);
+            if($app->collection==='review')throw new RedwoodError(503,'Use the Redwood Review installer; the original app is a separate release.');
             if($method!=='GET')throw new RedwoodError(405,'Method not allowed');
             $result=$app->release();
             if($action==='apk'){

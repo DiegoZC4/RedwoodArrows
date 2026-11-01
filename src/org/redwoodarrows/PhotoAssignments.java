@@ -47,6 +47,15 @@ final class PhotoAssignments {
         bucket(family(),null).observations.add(mark);draft.practice.checked="";revision++;return id;
     }
     void remove(Set<Integer> selected){for(Store.View v:family())v.observations.removeIf(o->selected.contains(o.id));draft.practice.checked="";revision++;}
+    void changePreset(TargetPreset preset){
+        if(preset==null)throw new IllegalArgumentException("Choose a target preset");
+        if(draft.preset().id.equals(preset.id))return;
+        draft.target=preset;draft.type=preset.family;draft.diameterCm=(int)Math.round(preset.diameterMm/10);
+        // A different face changes the scale/rings for the entire grouping.
+        // Keep every photo and entry mark, but never reuse its old geometry.
+        for(Store.View view:draft.views){view.calibration=null;view.rimMarks.clear();view.innerMarks.clear();view.detectionState="edited";}
+        draft.practice.checked="";revision++;
+    }
     static void move(List<Store.View> from,Store.View to,Set<Integer> selected,String warning){
         List<Store.Observation> moved=new ArrayList<>();
         for(Store.View v:from){Iterator<Store.Observation> it=v.observations.iterator();while(it.hasNext()){Store.Observation o=it.next();if(selected.contains(o.id)){it.remove();if(!o.associationWarning.contains(warning))o.associationWarning+=(o.associationWarning.isEmpty()?"":" ")+warning;moved.add(o);}}}
@@ -80,8 +89,24 @@ final class PhotoAssignments {
             draft.practice.checked="";revision++;
         }catch(Exception e){restore(before);throw e;}
     }
+    void assignEmptyTarget(Geometry.Calibration target){
+        if(!ids().isEmpty())throw new IllegalArgumentException("Choose the arrows for this target");
+        Geometry.inverse(target.h);for(double value:target.h)if(!Double.isFinite(value))throw new IllegalArgumentException("Invalid target outline");
+        Geometry.Calibration chosen=TargetSelection.copy(target);chosen.reviewed=true;
+        if(!chosen.source.startsWith(TargetSelection.PREFIX))chosen.source=TargetSelection.PREFIX+chosen.source;
+        reference().calibration=chosen;draft.practice.checked="";revision++;
+    }
     Store.View overlay()throws Exception {Store.View v=Store.View.from(reference().json());v.calibration=null;v.observations.clear();v.rimMarks.clear();v.innerMarks.clear();for(Store.View member:family())v.observations.addAll(member.observations);return v;}
     List<Geometry.Calibration> targets(){List<Geometry.Calibration> result=new ArrayList<>();for(Store.View v:family())if(v.calibration!=null){boolean known=false;for(Geometry.Calibration c:result)known|=same(c,v.calibration);if(!known)result.add(v.calibration);}return result;}
+    Geometry.Calibration singleConfirmedTarget(){
+        Geometry.Calibration target=null;
+        for(Store.View view:family())if(!view.observations.isEmpty()){
+            if(view.calibration==null||!view.calibration.reviewed||target!=null&&!same(target,view.calibration))return null;
+            target=view.calibration;
+        }
+        if(target==null&&ids().isEmpty()&&reference().calibration!=null&&reference().calibration.reviewed)target=reference().calibration;
+        return target==null?null:TargetSelection.copy(target);
+    }
     Map<Integer,String> labels(){Map<Integer,String> labels=new HashMap<>();List<Geometry.Calibration> targets=targets();for(Store.View v:family())for(Store.Observation o:v.observations){String name="?";for(int i=0;i<targets.size();i++)if(same(v.calibration,targets.get(i)))name=""+(char)('A'+i);labels.put(o.id,name);}return labels;}
     Store.Group commit(Store store)throws Exception {
         List<File> created=new ArrayList<>();boolean saved=false;
@@ -100,6 +125,13 @@ final class PhotoAssignments {
                 }
             }
             store.save(draft);saved=true;return draft;
-        }finally{if(!saved)for(File file:created)if(!file.delete())file.deleteOnExit();}
+        }finally{if(!saved)synchronized(Store.FILE_LOCK){
+            // A failure can occur after group.json was renamed. Remove only
+            // copies proved unreferenced by the actual committed group.
+            try{Set<String> referenced=new HashSet<>();File json=new File(store.directory(draft),"group.json");
+                if(json.isFile())for(Store.View view:store.read(json).views)referenced.add(view.file);
+                for(File file:created)if(!referenced.contains(file.getName())&&!file.delete())file.deleteOnExit();
+            }catch(Exception ambiguous){/* Keeping an extra alias is safer than deleting a committed photo. */}
+        }}
     }
 }

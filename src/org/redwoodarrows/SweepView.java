@@ -88,7 +88,7 @@ public final class SweepView extends android.widget.FrameLayout implements GLSur
     private void finish(boolean ready){
         if(closed||finishing)return;finishing=true;automatic=false;requested.set(false);capture.setEnabled(false);auto.setEnabled(false);done.setEnabled(false);
         status.setText(completionNotice+"\n"+(ready?"Opening your grouping for one quick check.":"Opening the available photos. Uncertain positions stay flagged."));
-        if(ready){status.setTextColor(0xFFD8EB98);performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);announceForAccessibility(completionNotice);}
+        if(ready){status.setTextColor(MainActivity.ACCENT);performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);announceForAccessibility(completionNotice);}
         postDelayed(()->{if(!closed)gl.queueEvent(()->activity.runOnUiThread(()->{if(!closed)listener.finished();}));},ready?1200:400);
     }
     public void resume()throws Exception {if(session!=null&&!closed){session.resume();gl.onResume();}}
