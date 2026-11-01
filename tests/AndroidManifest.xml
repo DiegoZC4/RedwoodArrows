@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.redwoodarrows.reviewtests" android:versionCode="1" android:versionName="1">
+    <uses-sdk android:minSdkVersion="31" android:targetSdkVersion="35" />
+    <application android:label="Redwood gesture checks" android:debuggable="true" android:allowBackup="false" />
+    <instrumentation android:name="org.redwoodarrows.ReviewTouchInstrumentation" android:targetPackage="org.redwoodarrows.reviewtests" android:functionalTest="true" />
+</manifest>

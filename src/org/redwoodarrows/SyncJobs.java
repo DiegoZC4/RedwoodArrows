@@ -9,7 +9,7 @@ public final class SyncJobs extends JobService {
     static final int ONCE=88051,PERIODIC=88052;
     final java.util.Map<Integer,Future<?>> work=new java.util.HashMap<>();
     static void schedule(Context context){
-        if(!new SyncSession(context).present())return;
+        if(!SyncRuntime.enabled(context)||!new SyncSession(context).present())return;
         JobScheduler scheduler=context.getSystemService(JobScheduler.class);ComponentName service=new ComponentName(context,SyncJobs.class);
         if(scheduler.getPendingJob(ONCE)==null)scheduler.schedule(new JobInfo.Builder(ONCE,service).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPersisted(true).setBackoffCriteria(60000,JobInfo.BACKOFF_POLICY_EXPONENTIAL).build());
         if(scheduler.getPendingJob(PERIODIC)==null)scheduler.schedule(new JobInfo.Builder(PERIODIC,service).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPersisted(true).setPeriodic(15*60*1000).build());

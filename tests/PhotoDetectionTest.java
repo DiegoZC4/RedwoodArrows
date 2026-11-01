@@ -27,6 +27,11 @@ public final class PhotoDetectionTest {
             check(done.shooter.name.equals("Sam")&&done.practice.meters==13.716,"Concurrent shooter and distance corrections survive");
             check(view.observations.size()==2&&view.detectionState.equals("done"),"Dots deduplicated and committed once");check(!PhotoDetection.complete(store,task,points(),fit(200),false),"Duplicate callback cannot duplicate dots");
             check(PhotoDetection.pending(store).isEmpty(),"Successful job leaves durable queue");check(view.calibration!=null&&!view.calibration.reviewed,"Auto fit is not a manual review");
+            check(PhotoDetection.sameEntry(new double[]{100,100},new double[]{102,100},600),"Near-identical proposals still deduplicate");
+            check(!PhotoDetection.sameEntry(new double[]{100,100},new double[]{104,100},600),"Distinct close arrows are not collapsed by a second wider suppression");
+            check(!PhotoDetection.sameEntry(new double[]{200,200},new double[]{208,200},1200),"Close-arrow suppression scales with original photo width");
+            Store.Group close=fixture(store,true);PhotoDetection.complete(store,task(store,close),Arrays.asList(new double[]{100,100,.9},new double[]{103,100,.85}),null,false);
+            check(read(store,close).views.get(0).observations.size()==2,"Background save preserves neighboring entries 4.5 review pixels apart");
             check(PhotoDetection.previewResults(done).stream().filter(r->Double.isFinite(r.x)).count()==2,"Provisional 2D is visible without review");check(Store.results(done).stream().noneMatch(r->Double.isFinite(r.x)),"Provisional fit does not contaminate progress statistics");
             check(view.json().toString().equals(Store.View.from(view.json()).json().toString()),"Detection provenance survives serialization");
             check(Arrays.equals(Files.readAllBytes(new File(store.directory(done),view.file).toPath()),new byte[]{1,2,3}),"Detection never rewrites the photograph");

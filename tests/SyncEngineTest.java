@@ -7,7 +7,7 @@ import java.util.*;
 
 /** Two simulated phones using the real PHP HTTP API. All photos are invented. */
 public final class SyncEngineTest {
-    static int checks;static byte[] jpeg;
+    static int checks;static byte[] jpeg;static boolean reviewed;
     static void check(boolean value,String message){checks++;if(!value)throw new AssertionError(message);}
     static Store.Group make(Store store,String name)throws Exception {
         Store.Group g=Store.Group.start(TargetCatalog.defaultPreset(),new ShooterRoster.Person("archer-alex","Alex"));g.name=name;
@@ -24,7 +24,7 @@ public final class SyncEngineTest {
         check(Store.csv(left).equals(Store.csv(right)),"Both phones compute identical target-plane coordinates");
         for(Store.View v:right.views)check(Arrays.equals(Files.readAllBytes(new File(b.directory(right),v.file).toPath()),jpeg),"Annotation sync preserves every original/aliased JPEG");
     }
-    static SyncEngine engine(Store store,SyncEngine.Transport remote)throws Exception{return new SyncEngine(store,new File(store.root.getParentFile(),"sync"),remote);}
+    static SyncEngine engine(Store store,SyncEngine.Transport remote)throws Exception{return new SyncEngine(store,new File(store.root.getParentFile(),"sync"),remote,reviewed);}
     static abstract class Proxy implements SyncEngine.Transport {
         final SyncEngine.Transport base;Proxy(SyncEngine.Transport b){base=b;}
         public JSONObject json(String a,JSONObject i)throws Exception{return base.json(a,i);}
@@ -33,10 +33,11 @@ public final class SyncEngineTest {
     }
     public static void main(String[] args)throws Exception {
         JSONObject settings=new JSONObject(new String(SyncFiles.bytes(System.in,100000),"UTF-8"));jpeg=Base64.getDecoder().decode(settings.getString("photo"));
+        reviewed=settings.optBoolean("reviewed");
         Path temp=Files.createTempDirectory("redwood-sync-phones-");
         try{
             Store a=new Store(temp.resolve("phone-a").toFile()),b=new Store(temp.resolve("phone-b").toFile());
-            SyncHttp ra=new SyncHttp(settings.getString("endpoint"),settings.getString("owner"),true),rb=new SyncHttp(settings.getString("endpoint"),settings.getString("member"),true);
+            SyncHttp ra=new SyncHttp(settings.getString("endpoint"),settings.getString("owner"),true,reviewed),rb=new SyncHttp(settings.getString("endpoint"),settings.getString("member"),true,reviewed);
             Store.Group first=make(a,"Offline first end");String id=first.id,photo=first.views.get(0).file;String original=Store.csv(first);
             check(a.list().size()==1&&b.list().isEmpty(),"Offline capture does not depend on another device or auth");
             SyncEngine.Transport offline=new Proxy(ra){public JSONObject json(String action,JSONObject input)throws Exception{throw new IOException("Invented lost connection");}};
@@ -139,6 +140,24 @@ public final class SyncEngineTest {
             correction=new PhotoAssignments(read(a,automatic.id),pending.id);correction.remove(Collections.singleton(added));correction.commit(a);engine(a,ra).run();engine(b,rb).run();
             engine(a,ra).run();engine(b,rb).run();sameAnnotations(a,b,automatic.id);
             check(new PhotoAssignments(read(b,automatic.id),pending.id).ids().isEmpty()&&PhotoDetection.pending(a).isEmpty()&&PhotoDetection.pending(b).isEmpty(),"Deleting every dot syncs durably and never resurrects detections on retry");
+            if(SyncEngineTest.reviewed){
+                Store.Group reviewedGroup=make(a,"Legacy checked photo");String viewId=reviewedGroup.views.get(0).id;
+                reviewedGroup=TrainingReviews.confirm(a,reviewedGroup,viewId,true);
+                reviewedGroup.photoReviews=null;a.save(reviewedGroup);
+                engine(a,ra).run();engine(b,rb).run();Store.Group sharedReview=read(b,reviewedGroup.id);
+                check(TrainingReviews.checkedPhotos(b,sharedReview).contains(viewId),"Legacy local checkmark reaches the other phone through the reviewed collection");
+                check(!TrainingReviews.file(b,sharedReview.id,viewId).exists(),"Synced review needs no fragile second-file download");
+                sharedReview=TrainingReviews.confirm(b,sharedReview,viewId,false);engine(b,rb).run();engine(a,ra).run();
+                check(TrainingReviews.checkedPhotos(a,read(a,reviewedGroup.id)).isEmpty(),"Remote uncheck overrides a stale checked journal on the first phone");
+                PhotoAssignments newDots=new PhotoAssignments(read(b,reviewedGroup.id),viewId);TrainingReviews.Session review=TrainingReviews.open(b,newDots);
+                newDots.add(11,12);review.setChecked(newDots,true);review.save(b,newDots);engine(b,rb).run();engine(a,ra).run();
+                check(TrainingReviews.checkedPhotos(a,read(a,reviewedGroup.id)).contains(viewId),"Corrected dots and explicit approval arrive together");
+                sameAnnotations(a,b,reviewedGroup.id);
+                SyncEngine quiet=engine(a,ra);quiet.run();check(quiet.uploaded==0&&quiet.downloaded==0,"Unchanged shared review does not loop or re-upload");
+                JSONObject wrong=read(a,reviewedGroup.id).json();wrong.getJSONObject("photo_reviews").getJSONObject(viewId).put("image_sha256",String.join("",Collections.nCopies(64,"a")));
+                try{new SyncFiles.Snapshot(reviewedGroup.id,SyncFiles.canonical(wrong),SyncFiles.snapshot(a,read(a,reviewedGroup.id),true).photos);throw new AssertionError("Wrong-image review accepted");}catch(IOException expected){}
+                check(TrainingReviews.checkedPhotos(a,read(a,reviewedGroup.id)).contains(viewId),"Rejected wrong-image metadata leaves real review intact");
+            }
         }finally{Store.editingGroupId=null;try(java.util.stream.Stream<Path> files=Files.walk(temp)){for(Path file:(Iterable<Path>)files.sorted(Comparator.reverseOrder())::iterator)Files.delete(file);}}
         check(!Files.exists(temp),"Both simulated phones and recovery fixtures cleaned");System.out.println("Two-phone sync checks passed: "+checks);
     }

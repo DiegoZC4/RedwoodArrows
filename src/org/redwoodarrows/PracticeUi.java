@@ -10,13 +10,13 @@ import java.util.*;
 /** Direct distance controls, with per-shooter defaults for new captures. */
 final class PracticeUi {
     static Practice forPerson(MainActivity a,ShooterRoster.Person person,List<Store.Group> history)throws Exception {String raw=a.getPreferences(0).getString("practice_next:"+person.id,"");return raw.isEmpty()?CaptureDefaults.previous(person,history):Practice.from(new JSONObject(raw)).next();}
-    static Practice next(MainActivity a)throws Exception {List<Store.Group> history=a.store.list();return forPerson(a,a.shooters.next(history),history);}
+    static Practice next(MainActivity a)throws Exception {List<Store.Group> history=a.libraryGroups();return forPerson(a,a.shooters.next(history),history);}
     static String nextLabel(MainActivity a){try{return next(a).label();}catch(Exception e){return "Check distance setting";}}
     static void nextDialog(MainActivity a){try{show(a,null,next(a),()->{if(a.page.equals("capture-setup"))a.captureSetup();else a.home();});}catch(Exception e){a.message("Saved range settings could not be read; they have been preserved. "+e.getMessage());}}
     static void groupDialog(MainActivity a,Store.Group g){show(a,g,g.practice,()->a.results());}
     static View inline(MainActivity a,Store.Group g,String caption,Runnable saved){
         try{
-            List<Store.Group> history=g==null?a.store.list():Collections.emptyList();ShooterRoster.Person person=g==null?a.shooters.next(history):g.shooter;
+            List<Store.Group> history=g==null?a.libraryGroups():Collections.emptyList();ShooterRoster.Person person=g==null?a.shooters.next(history):g.shooter;
             Practice source=g==null?forPerson(a,person,history):g.practice;final DistanceControl[] control=new DistanceControl[1];
             control[0]=new DistanceControl(a,source.meters,source.unit,!source.arrowMeters.isEmpty(),caption,(meters,unit)->{
                 if(a.busy)return false;

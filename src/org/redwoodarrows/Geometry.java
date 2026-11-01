@@ -15,6 +15,7 @@ public final class Geometry {
         public double[] h;
         public double rms;
         public String source;
+        public String reviewLabel="";
         public boolean reviewed;
         public Calibration(double[] h, double rms, String source) {
             this.h=h; this.rms=rms; this.source=source;

@@ -130,6 +130,20 @@ database/WAL and local client data intact while investigating.
 
 ## Tests
 
+### Optional Reviewed Collection
+
+The Review client uses `collection=review`; omitted collection remains `original`.
+The hosting operator must back up the database/blobs, deploy the new private PHP
+files, and explicitly run `php cli.php enable-review /absolute/private` first.
+This only adds separate `review_groups` and `review_versions` tables. Original
+groups, revisions, accounts and photo blobs are retained. Unknown collections
+are rejected; the reviewed client checks the capability before authentication
+or uploads, so an older endpoint cannot silently write to the original library.
+See `SHARING_WITH_DIEGO.md` for the complete rollout. This code does not deploy
+itself or modify the live website.
+
+### Integration Suite
+
 `tests/test_sync_server.py` creates isolated temporary PHP HTTP servers and
 invented JPEGs, and cleans them on success/failure. After compiling
 `tests/SyncEngineTest.java`, it additionally drives the actual Java client engine

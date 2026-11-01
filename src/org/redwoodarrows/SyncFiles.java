@@ -45,6 +45,7 @@ final class SyncFiles {
             if(!parsed.id.equals(id)||parsed.views.size()!=photos.length()||!parsed.pendingPhotoCleanup.isEmpty())throw new IOException("Invalid shared grouping");
             Set<String> refs=new HashSet<>();for(Store.View v:parsed.views)if(!refs.add(photo(v.file)))throw new IOException("Repeated photo reference");
             for(int i=0;i<photos.length();i++)if(!refs.remove(photos.getJSONObject(i).getString("file")))throw new IOException("Unexpected shared photo");
+            TrainingReviews.validateWire(parsed,photos);
             fingerprint=hash(signed.toString().getBytes(StandardCharsets.UTF_8));
         }
         JSONObject wire(long base)throws Exception {return new JSONObject().put("id",id).put("body",body).put("photos",photos).put("fingerprint",fingerprint).put("base",base);}
@@ -54,7 +55,11 @@ final class SyncFiles {
         }
     }
     static Snapshot snapshot(Store store,Store.Group g)throws Exception {
-        JSONObject j=g.json();j.remove("pending_photo_cleanup");
+        return snapshot(store,g,false);
+    }
+    static Snapshot snapshot(Store store,Store.Group g,boolean reviews)throws Exception {
+        JSONObject j=g.json();j.remove("pending_photo_cleanup");j.remove("photo_reviews");
+        if(reviews){JSONObject records=TrainingReviews.forSync(store,g);if(records.length()>0)j.put("photo_reviews",records);}
         List<Store.View> views=new ArrayList<>(g.views);views.sort(Comparator.comparing(v->v.file));JSONArray photos=new JSONArray();
         for(Store.View v:views){File f=new File(store.directory(g),photo(v.file));
             if(!f.getCanonicalFile().getParentFile().equals(store.directory(g).getCanonicalFile())||!f.isFile()||f.length()>PHOTO_LIMIT)throw new IOException("A saved grouping photo is missing or too large");

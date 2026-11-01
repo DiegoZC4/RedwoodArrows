@@ -125,6 +125,11 @@ final class ConsistencyStats {
     void computeIntervals(){for(Series line:series)for(Sample sample:line.samples){if(Thread.currentThread().isInterrupted())return;sample.computeInterval();}}
     static double quantile(double[] sorted,double probability){double at=(sorted.length-1)*probability;int lo=(int)Math.floor(at),hi=(int)Math.ceil(at);return sorted[lo]+(sorted[hi]-sorted[lo])*(at-lo);}
     static boolean trendReady(Sample sample){return sample!=null&&sample.records>=ROLLING_100&&Double.isFinite(sample.spread);}
+    static boolean dashedLink(Sample previous,Sample next,Iterable<Long> dates){
+        if(!previous.rangeKey.equals(next.rangeKey))return true;
+        for(long time:dates)if(time>previous.time&&time<next.time)return true;
+        return false;
+    }
     Sample trendAt(Series line,long time){for(Sample sample:line.trend)if(sample.time==time)return sample;return null;}
     static long rangeKey(double meters){return Math.round(meters*1000);}
     static long day(long time){Calendar calendar=Calendar.getInstance();calendar.setTimeInMillis(time);calendar.set(Calendar.HOUR_OF_DAY,0);calendar.set(Calendar.MINUTE,0);calendar.set(Calendar.SECOND,0);calendar.set(Calendar.MILLISECOND,0);return calendar.getTimeInMillis();}

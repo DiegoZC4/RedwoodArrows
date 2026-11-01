@@ -1,5 +1,11 @@
 # Redwood Arrows
 
+This local source tree also contains **Redwood Review**, a separately installed
+app with the revised review UI and a separate shared Reviewed collection. See
+[SHARING_WITH_DIEGO.md](SHARING_WITH_DIEGO.md) for that build and its required
+server setup. The download link and original-library instructions below are for
+the original Redwood Arrows release, not the Review handoff APK.
+
 **[Download the latest Android app](https://github.com/DiegoZC4/RedwoodArrows/releases/latest/download/RedwoodArrows.apk)** · [Release notes](https://github.com/DiegoZC4/RedwoodArrows/releases/latest)
 
 To update, download and open the APK, then choose **Update**. **Do not uninstall**

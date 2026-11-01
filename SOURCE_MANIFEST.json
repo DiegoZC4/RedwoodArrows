@@ -1,6 +1,11 @@
 {
   "files": [
     {
+      "path": ".gitattributes",
+      "bytes": 80,
+      "sha256": "555de2fac423af19f3bac770d6fbf96983174a5d21ddbdf37fcb83b6e51891f8"
+    },
+    {
       "path": ".github/workflows/beta.yml",
       "bytes": 3080,
       "sha256": "eb76161ff1a2bf267815047d3420e4afc63207be1bbf45121f651b48934f9127"
@@ -27,13 +32,28 @@
     },
     {
       "path": "README.md",
-      "bytes": 17462,
-      "sha256": "1978ff342fc6faf3a5c8d35787144b1d2843ff70b1165158aa2c5f43232a0fb7"
+      "bytes": 17845,
+      "sha256": "2babb9a725d22b92425086522a20ee8bff6f5705b4c5c43eb0dac5310b4d9a7c"
+    },
+    {
+      "path": "REVIEW_TRAINING_20261031.json",
+      "bytes": 2482,
+      "sha256": "b949008e9831fb621ceaa49661a0774052eb193857f0bbef6e4676af43b3542b"
+    },
+    {
+      "path": "SHARING_WITH_DIEGO.md",
+      "bytes": 6922,
+      "sha256": "6e061611258ca211a2e12eff5a3fa4f5f367e7c79fec2241f8153fc583e8812d"
     },
     {
       "path": "THIRD_PARTY.md",
-      "bytes": 5030,
-      "sha256": "80bd1d58d76de43006a1d3ee27466fca2ac9d1b95e6d1eee5fa035d704c76bab"
+      "bytes": 5936,
+      "sha256": "447e7bd5eaab2f5b327f52e3bbf86c08be77ecf6b8792ba60842263638289044"
+    },
+    {
+      "path": "UI_CHANGES_FOR_DIEGO.md",
+      "bytes": 3078,
+      "sha256": "ccb84583536f18b77a13a7b54503ba196a58e1ce9c55b94a5e999ab50c44b026"
     },
     {
       "path": "UPDATING.md",
@@ -91,6 +111,11 @@
       "sha256": "d4f84c666477aad9a9ee1cbe8f29dd3c775e500f69ad7ead615f336d19ad8e56"
     },
     {
+      "path": "assets/licenses/LUCIDE.txt",
+      "bytes": 880,
+      "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+    },
+    {
       "path": "assets/licenses/MAPLE_LEAF_PREVIEWS.txt",
       "bytes": 993,
       "sha256": "10c8d70c19940c989b418cdc1b301470803c2028649d43db430dfe3a6d59f1e7"
@@ -126,24 +151,149 @@
       "sha256": "f038ef510c870e3f191ea00c493ecbe29fbb63ab5e1d09f0931f354940c22a27"
     },
     {
+      "path": "res/drawable-v26/review_launcher.xml",
+      "bytes": 231,
+      "sha256": "73ddca5e250d8f75cb111d17289a2f134729a6872f38bcd6d9aad98398b74f57"
+    },
+    {
+      "path": "res/drawable-v33/review_launcher.xml",
+      "bytes": 302,
+      "sha256": "2bdf988cdff3a8402ef7638b60e6f3dbba69f6673b88ba06009ec7dcb8248646"
+    },
+    {
       "path": "res/drawable/ic_launcher.xml",
       "bytes": 810,
       "sha256": "3448dbbe567f40c65830c813b18d9755ecd5de44cfa34f7c09488aff18017ce4"
     },
     {
+      "path": "res/drawable/review_camera.xml",
+      "bytes": 657,
+      "sha256": "c39675b1a3ebc4a867acd54ab1184daf48ed9f18230a4dd5cabf0ee313aab181"
+    },
+    {
+      "path": "res/drawable/review_chart_no_axes_combined.xml",
+      "bytes": 1352,
+      "sha256": "502db7c7cea9bdb5f3211b7e738e3fa7dedc85c393bcd252fb1889f401deb11c"
+    },
+    {
+      "path": "res/drawable/review_chevron_right.xml",
+      "bytes": 366,
+      "sha256": "07709a897a6abb0b384b98fdbe53940046153ce6122df2d933182fbe265b97cc"
+    },
+    {
+      "path": "res/drawable/review_ellipsis_vertical.xml",
+      "bytes": 819,
+      "sha256": "cabd6ecbd38c3bca28b10a959c8b1f6d040a1ea133f946fa9542a5802c601138"
+    },
+    {
+      "path": "res/drawable/review_eye.xml",
+      "bytes": 667,
+      "sha256": "88a26baf8965c611ef05b640b2e5f98d4a07cc1543ca992af9ff6fabd227bf76"
+    },
+    {
+      "path": "res/drawable/review_house.xml",
+      "bytes": 682,
+      "sha256": "79af47b1213dbe4015abb0d7846f04f819c4dfffcbcea19c35d21d4dba0712ab"
+    },
+    {
+      "path": "res/drawable/review_icon_foreground.xml",
+      "bytes": 1074,
+      "sha256": "6b37b9392f9cdc495e80f637a1d3a36fe418859d231d94eaa826eb3b1d408bcf"
+    },
+    {
+      "path": "res/drawable/review_icon_monochrome.xml",
+      "bytes": 1074,
+      "sha256": "a429c8621a111f1a617d280521509b5753baa42bd0f0b4d88a855e1ee449692c"
+    },
+    {
+      "path": "res/drawable/review_image_plus.xml",
+      "bytes": 1216,
+      "sha256": "801a47180aaf31c5f3ddb14e41c78cda22f0faa804be2f1386fa413e1ac089a7"
+    },
+    {
+      "path": "res/drawable/review_images.xml",
+      "bytes": 1059,
+      "sha256": "d2b00333c97b14ac4a2cc967ee8f5e43ec143cfb896acc37d6afea6f2c3a139a"
+    },
+    {
+      "path": "res/drawable/review_launcher.xml",
+      "bytes": 213,
+      "sha256": "6f2c0ae26d4e0c4389b25b056f397e77bd302f56d0889a99be5ca952585ee78f"
+    },
+    {
+      "path": "res/drawable/review_list_checks.xml",
+      "bytes": 1113,
+      "sha256": "1d248f911c3a5e94fa756fefba05a22f055ae41c17eae3ac12d0ad7b40c191c6"
+    },
+    {
+      "path": "res/drawable/review_maximize.xml",
+      "bytes": 981,
+      "sha256": "77e268d3300f229acbc9c90b23a3e41288f467a62964a75bf61761e8f9df5e3c"
+    },
+    {
+      "path": "res/drawable/review_minus.xml",
+      "bytes": 361,
+      "sha256": "884328eed3ecbccf878ddca52977365c7aa93c9b96c78fda84bcb41f62cbfa0f"
+    },
+    {
+      "path": "res/drawable/review_mouse_pointer_2.xml",
+      "bytes": 485,
+      "sha256": "5ea10bcc2939f11bfc9d82194cc7ed10144c3d84e019c791dc5810a71e06536c"
+    },
+    {
+      "path": "res/drawable/review_move.xml",
+      "bytes": 1310,
+      "sha256": "776e858db2a2e681ba54adb1808cca6385c06a9b57585464358e03dcc6edcaf7"
+    },
+    {
+      "path": "res/drawable/review_plus.xml",
+      "bytes": 547,
+      "sha256": "7d336cc81dac3157bdb54ae97338c0777889afb9bfd6aef586f4d9bb7d4a2b5b"
+    },
+    {
+      "path": "res/drawable/review_rotate_cw.xml",
+      "bytes": 590,
+      "sha256": "8df49524364a423cb41e8a6acbe3506de7a20f2bd2372be8820a19b4d7de9373"
+    },
+    {
+      "path": "res/drawable/review_sliders_horizontal.xml",
+      "bytes": 1882,
+      "sha256": "f4f12c707df5b9dd73e7c9f8fc2ec72fcc49070bc382f6d9916acb423c4f2612"
+    },
+    {
+      "path": "res/drawable/review_trash_2.xml",
+      "bytes": 1169,
+      "sha256": "512fd05f00f833a5470d6b88796550ee350173bc91d45114a6e6cfb32beb9a61"
+    },
+    {
+      "path": "res/drawable/review_undo_2.xml",
+      "bytes": 600,
+      "sha256": "0d8fa0461eb8adca4141b9895042f4a5d9812c2228ab179a1c35e8e53abe88b4"
+    },
+    {
+      "path": "res/drawable/review_x.xml",
+      "bytes": 551,
+      "sha256": "70e81e604f99582d6b214bd9133734057f26285c9458d1107f85aab455eccc39"
+    },
+    {
+      "path": "res/values/review_icon.xml",
+      "bytes": 82,
+      "sha256": "04210d5ba34fd316ef2089c77f40f7f6e374a382ef7f0dcb190d7d9c9bafd726"
+    },
+    {
       "path": "server/README.md",
-      "bytes": 8638,
-      "sha256": "d7e29ee3a2311f9862dc37b533166899634f15ed3798b3e664e5bd64784a0d5f"
+      "bytes": 9369,
+      "sha256": "19aa0f049f8f2746cc2ec1e7cbb75d3e6d85c72486b74cbe6457208f58568eac"
     },
     {
       "path": "server/app.php",
-      "bytes": 20830,
-      "sha256": "35c1635ed5fea5ad37f74e8d765aba2cfbc575cecd6ea96d3a33c143f98be8e0"
+      "bytes": 22924,
+      "sha256": "37aa598ce2a5a9def1ce1e353a071f13c68874219b860a0f719999fc25e49b04"
     },
     {
       "path": "server/cli.php",
-      "bytes": 2511,
-      "sha256": "d8c96f87d2f1f644d27ca7e904587e6ea0af7632b06880909937bef4932fee31"
+      "bytes": 2676,
+      "sha256": "b28e1a7da1256effb115356ace94b3a780d11ff11aa1dbabbf22b9a077e998ec"
     },
     {
       "path": "server/probe.php",
@@ -169,6 +319,11 @@
       "path": "src/com/google/ar/core/examples/java/common/rendering/ShaderUtil.java",
       "bytes": 4667,
       "sha256": "ff68fc4d35a26a0db851df5cbf1d2b0bf89e24d9d9fce2d856b6c299f2200c07"
+    },
+    {
+      "path": "src/org/redwoodarrows/ActivityStats.java",
+      "bytes": 3746,
+      "sha256": "74be3b711e114fddda008b5a77fd3aacb76044cd0feb3de199efcaa214fc2d50"
     },
     {
       "path": "src/org/redwoodarrows/AppUpdates.java",
@@ -197,18 +352,18 @@
     },
     {
       "path": "src/org/redwoodarrows/ConsistencyChart.java",
-      "bytes": 10214,
-      "sha256": "ad2f1952eef3ebb7e29bc4c6f1a4cb5970aefd2de9b50096cc0918fbc6e88c30"
+      "bytes": 14603,
+      "sha256": "2a7b414050004ccbac3dc3d2ee06d0443c5e6a077f6b9113def251608e44e09c"
     },
     {
       "path": "src/org/redwoodarrows/ConsistencyStats.java",
-      "bytes": 10723,
-      "sha256": "c67c21aec0de5e0debb176fb6fb650ecc98957f70a61fe31875a4fc920b75819"
+      "bytes": 10976,
+      "sha256": "bf44b2a643fdd4b2da31b49294709039ff5f27b46063de60e5ec478fa39823e2"
     },
     {
       "path": "src/org/redwoodarrows/ConsistencyUi.java",
-      "bytes": 18402,
-      "sha256": "0db4f15726379a59ee996adf2083ec7541aac5b5942173451f57ddbd54e4c143"
+      "bytes": 17804,
+      "sha256": "ee6eb25e068deaa32ee0ea156ac509fe03010ccd7aab2decaa9db58c92996430"
     },
     {
       "path": "src/org/redwoodarrows/CyclicPagerMotion.java",
@@ -232,13 +387,13 @@
     },
     {
       "path": "src/org/redwoodarrows/Geometry.java",
-      "bytes": 20813,
-      "sha256": "d3719c836b75af5252d8d19f8c2178fbe6a0d2bf9956cd817eb6fc080dcdedbb"
+      "bytes": 20851,
+      "sha256": "a0857fb751b852e4b54f764f2bd70d6695f8b343691f060e6fa47bc5a356a544"
     },
     {
       "path": "src/org/redwoodarrows/GroupDetails.java",
-      "bytes": 9268,
-      "sha256": "4165199d37d48e722dac74525c2e8539defb6ef176a1d9862db21173922e40a0"
+      "bytes": 11702,
+      "sha256": "773ac3f9b7e09dde2221691cb009fb8fd4f364ec62e873879e6740fa00378366"
     },
     {
       "path": "src/org/redwoodarrows/GroupImageViewer.java",
@@ -252,13 +407,23 @@
     },
     {
       "path": "src/org/redwoodarrows/GroupPresentation.java",
-      "bytes": 2771,
-      "sha256": "621f1a3911931feb8920ab8befb37823fd98e11de7e6478788c716f73bd351b6"
+      "bytes": 3217,
+      "sha256": "75ac0f554e05c3957943b6b074beab853bc2e31bb5de399b7bc2a967c0545ea9"
     },
     {
       "path": "src/org/redwoodarrows/GroupingGallery.java",
-      "bytes": 13519,
-      "sha256": "35b837c3e223c16f70e4c44f2de430a1c72b1d94dec4e30be243662646209899"
+      "bytes": 17192,
+      "sha256": "96a278e1dfa5d18d505bd5328666f979082d7fe04db011aec11b937d242ad08a"
+    },
+    {
+      "path": "src/org/redwoodarrows/HomeStats.java",
+      "bytes": 4090,
+      "sha256": "58e5c1ba8b5eecfd29b5839a84b7b4ce6c5740df969e9c8d5d34187f489c159a"
+    },
+    {
+      "path": "src/org/redwoodarrows/HomeUi.java",
+      "bytes": 33726,
+      "sha256": "a80e15f1c9ae559168b46b6dee25e565c6e4ec81031e2b2eecc8235577ae8ca3"
     },
     {
       "path": "src/org/redwoodarrows/HybridVision.java",
@@ -276,9 +441,24 @@
       "sha256": "39537a32195b2e61a43b26149f78a5dba6b7c771833e3739b5b98eaf04fe70d9"
     },
     {
+      "path": "src/org/redwoodarrows/LibraryFilter.java",
+      "bytes": 1203,
+      "sha256": "96d0f2fde3cd89030f5614336e378bdd57b6dec1a3eb2f55a8cdb89c7b6f23e0"
+    },
+    {
+      "path": "src/org/redwoodarrows/LibraryFilters.java",
+      "bytes": 4654,
+      "sha256": "d04b58e776115254e4308a4a84712909ee771b3abe222d2d698a74d0650f07ef"
+    },
+    {
+      "path": "src/org/redwoodarrows/LibrarySnapshot.java",
+      "bytes": 1229,
+      "sha256": "00cfb0d749aaee49d2e8982a88d8f156364552666a35bd09cf54354d6e97a3e3"
+    },
+    {
       "path": "src/org/redwoodarrows/MainActivity.java",
-      "bytes": 47346,
-      "sha256": "ba9c17ea0fb15b8e01fde0d08602ec90289326597d5b5fa08833f62b9af3b28e"
+      "bytes": 49976,
+      "sha256": "b8ab7378d10edc22a147a911a2e57d4abd174b8eb225845d62797ff50834fad3"
     },
     {
       "path": "src/org/redwoodarrows/MultiViewFusion.java",
@@ -287,13 +467,13 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignmentUi.java",
-      "bytes": 16102,
-      "sha256": "6610a19a2ebb67a0854fda2860cdd03d49e3dde6562bb03075ce893b0a327b5e"
+      "bytes": 39372,
+      "sha256": "778d952fb5752ba76325b46569a2658256384d78957d3943e4d175efc421b23e"
     },
     {
       "path": "src/org/redwoodarrows/PhotoAssignments.java",
-      "bytes": 9497,
-      "sha256": "7869fea2ab5b052f26a2f1d9f095a09a021def52025d50daf3f6e678029ecc28"
+      "bytes": 11843,
+      "sha256": "8096c22bdc59485ff9a06cd69f170369e4c7e84afe185754065e9749370436f9"
     },
     {
       "path": "src/org/redwoodarrows/PhotoCamera.java",
@@ -302,13 +482,13 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoCanvas.java",
-      "bytes": 12481,
-      "sha256": "99c7a5fd60858774cdf23ba9b06e9f34f7b78ad0daf187d4f63ba39b4e608934"
+      "bytes": 18972,
+      "sha256": "7ac5987dfa93aebbac7096591d6a2c62b4ec87046759f70fc8f31f3ca45897c1"
     },
     {
       "path": "src/org/redwoodarrows/PhotoDetection.java",
-      "bytes": 7059,
-      "sha256": "1069320d0f52aedace8b511671e9372bdf6b7d12ec1feedadb115701b364c279"
+      "bytes": 7776,
+      "sha256": "cd28bd09e68f7c0c7785291204cbb81f4686d022ec4e6dfe9339f1408f4053e6"
     },
     {
       "path": "src/org/redwoodarrows/PhotoDetectionJobs.java",
@@ -317,13 +497,23 @@
     },
     {
       "path": "src/org/redwoodarrows/PhotoDetectionRuntime.java",
-      "bytes": 3704,
-      "sha256": "120c2d736e0a893ee98fafba9199c192d21be80a6d69cb538c8f254c4116fdd7"
+      "bytes": 4004,
+      "sha256": "82aaa74ebf95fc123b5ada82aeadff3be1a2533f682ea75701dc2a00b7fe8125"
     },
     {
       "path": "src/org/redwoodarrows/PhotoImport.java",
       "bytes": 5789,
       "sha256": "0702559ea8bff96491eb0b297af78bd8df3612bbca619f9c151b9359425c5320"
+    },
+    {
+      "path": "src/org/redwoodarrows/PhotoReview.java",
+      "bytes": 3158,
+      "sha256": "24de89be59a5e6eeab33bd5c755cd1bce100b79f24e655bdfba44c9a7a547932"
+    },
+    {
+      "path": "src/org/redwoodarrows/PhotoReviewState.java",
+      "bytes": 4765,
+      "sha256": "d9c9667ec66182c6ba02e05f10809ff0c0325d6f9d8261ddb8349143d1115f42"
     },
     {
       "path": "src/org/redwoodarrows/PhotoSavedUi.java",
@@ -337,8 +527,8 @@
     },
     {
       "path": "src/org/redwoodarrows/PracticeUi.java",
-      "bytes": 10495,
-      "sha256": "d54998f54a06b4e1fd46f27422edfc982693720473f51c1f5cb87bcc97133296"
+      "bytes": 10501,
+      "sha256": "63c0020f57f7824a6a1870b3e7181137158f59f0a4f3dcb3f80f7aa29426b3ee"
     },
     {
       "path": "src/org/redwoodarrows/ProgressStats.java",
@@ -347,8 +537,8 @@
     },
     {
       "path": "src/org/redwoodarrows/ProgressUi.java",
-      "bytes": 15606,
-      "sha256": "24f7bd5784d3377948a8c88c386f89dbb51ba582bd339267c9f99f4be545b17c"
+      "bytes": 16549,
+      "sha256": "5b2f4ceb356335af8570b4f576adf7bf6aca32af62158487cd2e8c92298f2c10"
     },
     {
       "path": "src/org/redwoodarrows/Qa.java",
@@ -357,8 +547,13 @@
     },
     {
       "path": "src/org/redwoodarrows/QuickCapture.java",
-      "bytes": 3576,
-      "sha256": "51dcfe5329bb582f4d7c717ad706622e3a660afd29c74b5e1f085b9af2de4db2"
+      "bytes": 3999,
+      "sha256": "11f29610212a53961d673dcc7052b2abc1f49ca017c9d6f67d47df7b68bef7a6"
+    },
+    {
+      "path": "src/org/redwoodarrows/QuickReviewUi.java",
+      "bytes": 2138,
+      "sha256": "bba4daec1bc592254d34f1d5bc76e871bc352a435b0091c2c53b61f90b4184a8"
     },
     {
       "path": "src/org/redwoodarrows/ReleaseUpdate.java",
@@ -366,9 +561,24 @@
       "sha256": "9a3c3891fbee7530c586e3c8a79898aea1ea44c5e32784ab3ccdb94e560b21b3"
     },
     {
+      "path": "src/org/redwoodarrows/ReviewControls.java",
+      "bytes": 2299,
+      "sha256": "e049e9db752e6a18c30853163f33b28d2b5a271bcf127ab201494e9dac88e6a9"
+    },
+    {
+      "path": "src/org/redwoodarrows/ReviewQueue.java",
+      "bytes": 1408,
+      "sha256": "dd9f78159276dc03ddf7c210973edccf1d945eba2a7e2513e56ef0690d4303f2"
+    },
+    {
+      "path": "src/org/redwoodarrows/ShooterColors.java",
+      "bytes": 1358,
+      "sha256": "6d4309ac8ab82e85904c4e537a75bd98cca05512ec4797146b4886068055ada3"
+    },
+    {
       "path": "src/org/redwoodarrows/ShooterPager.java",
-      "bytes": 11293,
-      "sha256": "fe126ce193cd8629c604badfba24871201430892e773ae98e866c4f63ffc9cb8"
+      "bytes": 11464,
+      "sha256": "121ddf1e890cfd3fa0dda95346851f33f47945ef63637fe24803548d3fdf38e7"
     },
     {
       "path": "src/org/redwoodarrows/ShooterRoster.java",
@@ -377,13 +587,13 @@
     },
     {
       "path": "src/org/redwoodarrows/ShootersUi.java",
-      "bytes": 8152,
-      "sha256": "ca0112ce3bca7b77bed3178933958ba08091ec42344fd72529e7b33e1bd071a2"
+      "bytes": 9056,
+      "sha256": "6ba50491acbc9f9975d6dc260b6e855c8dfb10158c5950b09af7a4fa952646b2"
     },
     {
       "path": "src/org/redwoodarrows/Store.java",
-      "bytes": 34087,
-      "sha256": "84b3a58eff8a73e09a339285c92393f2f038edff6a94aae853ac6090ab821301"
+      "bytes": 34892,
+      "sha256": "c0f649089786abfb82321fd2ed0acc7a52cf41f79cbee69778251ec5a506cc39"
     },
     {
       "path": "src/org/redwoodarrows/SweepAnalysis.java",
@@ -412,8 +622,8 @@
     },
     {
       "path": "src/org/redwoodarrows/SweepView.java",
-      "bytes": 19486,
-      "sha256": "89d9e3fb68c37e9fac1e77d31bc17a11635083cdd83f7335972840eff613717a"
+      "bytes": 19495,
+      "sha256": "0e128c857e52a281e843521ee89dd3e3d75eaf3e527e5852a124b269e0a24650"
     },
     {
       "path": "src/org/redwoodarrows/SyncDiagnostics.java",
@@ -422,28 +632,28 @@
     },
     {
       "path": "src/org/redwoodarrows/SyncEngine.java",
-      "bytes": 11143,
-      "sha256": "8cb426ec3dfcc78ae35a0b49fefac6d79e008d41a46d904d85e19b99f8033bb8"
+      "bytes": 11373,
+      "sha256": "c4a834e40b30ea4617993d072bc676579bcd9b3beb7597dd5463443b4359333d"
     },
     {
       "path": "src/org/redwoodarrows/SyncFiles.java",
-      "bytes": 5981,
-      "sha256": "64f7406424d886ea8799280f8979fd7dd06148323d1aaea055e81688c00bc4e6"
+      "bytes": 6327,
+      "sha256": "650cda3c5c8ebf4e901ef9de82c6ac58e18f3fb1653f0ba51133d3480439b1d8"
     },
     {
       "path": "src/org/redwoodarrows/SyncHttp.java",
-      "bytes": 4042,
-      "sha256": "632f819593d63d0b31bb8d8586addeb52f998c4326eac16cbd0b0181efbd1cb8"
+      "bytes": 5284,
+      "sha256": "37c44755ef77a2b62fd058e42af889e4c25ffa177295d3feba4b44564161b6ba"
     },
     {
       "path": "src/org/redwoodarrows/SyncJobs.java",
-      "bytes": 1683,
-      "sha256": "89d491e4b311f93e245418abd4706e2e40ead00bc7ffda5648e39ab6888f415c"
+      "bytes": 1714,
+      "sha256": "3eb3c8a20b35e40d09e5560071cc61c8ae11510bb1f890a93f29cca06e230c0a"
     },
     {
       "path": "src/org/redwoodarrows/SyncRuntime.java",
-      "bytes": 3679,
-      "sha256": "f1a191aea2d4c1cbeb6a4782c7a004932968bcae32360fb4e97ee9e83cfa7e4e"
+      "bytes": 4073,
+      "sha256": "582edaeaefdc32e8abd8bdaa26214c731ee6cb8f90664c8802f8fe935ac93769"
     },
     {
       "path": "src/org/redwoodarrows/SyncSession.java",
@@ -452,8 +662,8 @@
     },
     {
       "path": "src/org/redwoodarrows/SyncUi.java",
-      "bytes": 9621,
-      "sha256": "c9ac93fa429da7a02d7bce46a1ca9027b5d870dadc92606fda2ff0fd4c6c010b"
+      "bytes": 9860,
+      "sha256": "5e3b878e3f87e2b39aa06fa68e58fffb73eac8db90d81db03abae5955ee94abd"
     },
     {
       "path": "src/org/redwoodarrows/SyncWakeup.java",
@@ -462,8 +672,8 @@
     },
     {
       "path": "src/org/redwoodarrows/TargetCanvas.java",
-      "bytes": 5362,
-      "sha256": "b766afaa0a74765f9a7f6a1dd594b7acb2ade197a3b7bef41d4eb4231cebd62f"
+      "bytes": 8446,
+      "sha256": "c231a5bb037c3f8805a69f2d1ccd4e3ee4d830b0555335a0a386c2bde07729e5"
     },
     {
       "path": "src/org/redwoodarrows/TargetCatalog.java",
@@ -497,8 +707,8 @@
     },
     {
       "path": "src/org/redwoodarrows/TargetSelection.java",
-      "bytes": 2074,
-      "sha256": "71f020de0e301ab056b5fb583f8b42cf7d0476abf5251a67db0eba86ea6f57a3"
+      "bytes": 2102,
+      "sha256": "399437000934e3234b0ec96d38c5cbb060252495cd07ab78b99b96e3f3948277"
     },
     {
       "path": "src/org/redwoodarrows/TargetThumbnail.java",
@@ -511,6 +721,11 @@
       "sha256": "8a5ae5f22b465f27053be690d3625f99ef42c7c433a559bf4988f67288662923"
     },
     {
+      "path": "src/org/redwoodarrows/TrainingReviews.java",
+      "bytes": 16854,
+      "sha256": "739abc2d5e6374a93bf35ea6899f3c44e20a42b55cef9dd3c4bf0d13b1bcbac8"
+    },
+    {
       "path": "src/org/redwoodarrows/TwoShooterSwitch.java",
       "bytes": 4633,
       "sha256": "c8d669e2c0e60addca0bea614c1498b3565f5f6018ea647cdca4eeb21b4e2ca7"
@@ -521,6 +736,16 @@
       "sha256": "753180e477ac175706a9b3160aa6dbe03d4124195c552de93605b32a3db44702"
     },
     {
+      "path": "tests/ActivityStatsTest.java",
+      "bytes": 4163,
+      "sha256": "9bcc06c27f1736d585351548d2973416889c5ecf6742c770612d5fe89412d92e"
+    },
+    {
+      "path": "tests/AndroidManifest.xml",
+      "bytes": 525,
+      "sha256": "7c39653fe0bc8749427e19650743546a34d933c8ca1e607c8d09f7428996cccc"
+    },
+    {
       "path": "tests/BulkLabelsTest.java",
       "bytes": 5351,
       "sha256": "cc3cdbd82312bcdfb58797c368604de5a68c2cd1312973a439aa1551a8e1cf28"
@@ -529,6 +754,11 @@
       "path": "tests/CaptureDefaultsTest.java",
       "bytes": 4892,
       "sha256": "00b9242ed6d1087da5329cb3ea4f0466d79a3fc513bdcabfa273978f40411dc5"
+    },
+    {
+      "path": "tests/CenterDistanceTest.java",
+      "bytes": 5997,
+      "sha256": "0b2e48cca2ed2a879a578dd3bd3a7bcb34774edcc6aad99edad967a44b5ab0d1"
     },
     {
       "path": "tests/ConfidenceStatsTest.java",
@@ -546,14 +776,69 @@
       "sha256": "c450750f3fb070387ec15874633ced7015c800aaf49844635288e85851ae4484"
     },
     {
+      "path": "tests/GalleryPreviewTest.java",
+      "bytes": 3034,
+      "sha256": "1d033deba7ce319eadc07b109692c4b3c133c65b55fce853d06d7b8992eeff64"
+    },
+    {
+      "path": "tests/HomeStatsTest.java",
+      "bytes": 7415,
+      "sha256": "d97d8e5d451d3750ca2eb2a8a363d55d5ce2a8dc6a30d08a26a312e25299583b"
+    },
+    {
+      "path": "tests/ImpactVisionDeviceProbe.java",
+      "bytes": 1724,
+      "sha256": "5bd1ec9a2326490a65c42c3c9592a0611a1210f980d30d17ba3ba341ad861b94"
+    },
+    {
+      "path": "tests/LibraryFilterTest.java",
+      "bytes": 4371,
+      "sha256": "240f0df37d899ad4cb72212ab097368dd6853f472e42b20fa73571b05976bfbb"
+    },
+    {
+      "path": "tests/LibrarySnapshotTest.java",
+      "bytes": 3385,
+      "sha256": "2c4ca25aecf4d51e9c5065d26cbef882d86db48a7471a4921332240f06d1bb4d"
+    },
+    {
+      "path": "tests/LibrarySyncAudit.java",
+      "bytes": 2421,
+      "sha256": "422e867764bda206cb52db4ef7dd95a9ff144b3dc75d36ea82679a0df2632234"
+    },
+    {
+      "path": "tests/NavigationFeedbackTest.java",
+      "bytes": 1903,
+      "sha256": "0d6986ac570c7d5786f80ad42658b75b360ed3fe685dc5ddb26938198a3d452d"
+    },
+    {
       "path": "tests/PhotoAssignmentsTest.java",
       "bytes": 6106,
       "sha256": "15c8925b2c873ab538f52577db2cb8fe1a1a7730139b3a7aa1bf886a2efd5186"
     },
     {
+      "path": "tests/PhotoCanvasTouchTest.java",
+      "bytes": 5822,
+      "sha256": "e1188aa070c63be48cb5ae99e038ab038fb8e373e79f69a05ae3ca5658c39260"
+    },
+    {
+      "path": "tests/PhotoDetectionSpacingTest.java",
+      "bytes": 1158,
+      "sha256": "cab859f47740533660e4bee25a9f82f65da233df5f332f11a0554276423876cd"
+    },
+    {
       "path": "tests/PhotoDetectionTest.java",
-      "bytes": 7101,
-      "sha256": "ce162b37d23cfc25612eb589734831c862b935ad0269f68b0e81a304e26403a0"
+      "bytes": 7885,
+      "sha256": "aee550616d11e4f1e03d24d42bebd37ecee3393271c4d9d19bbbc626e865e376"
+    },
+    {
+      "path": "tests/PhotoReviewStateTest.java",
+      "bytes": 5998,
+      "sha256": "b375bc49173439b9111058e10f5d5ede6726284bfb3fe4087e729a38091d03a1"
+    },
+    {
+      "path": "tests/PhotoReviewTest.java",
+      "bytes": 8522,
+      "sha256": "42faf46e23810dceb7ec2acbf43857345b4fff6402f665412775675ce98d13ec"
     },
     {
       "path": "tests/ReleaseUpdateTest.java",
@@ -561,9 +846,29 @@
       "sha256": "99ec497cbbba38f905b883c1c7c7a146a6dceea2859d4e3eba57670dd01a2296"
     },
     {
+      "path": "tests/ReviewAutosaveFixture.java",
+      "bytes": 1806,
+      "sha256": "6acb7d8c291d24a27a42ae376fd18023222d9cff1cddc7418bb3939be40d0894"
+    },
+    {
+      "path": "tests/ReviewTouchInstrumentation.java",
+      "bytes": 1158,
+      "sha256": "6dd157153a525b1d8ffd21ad626011662052d3e7287fdf756201917585f1a7d5"
+    },
+    {
+      "path": "tests/ShooterColorsTest.java",
+      "bytes": 2500,
+      "sha256": "6d067885f033d9af4fff25c36a0aaeffd811f852fc9c38b6d0bc258c72e0fad7"
+    },
+    {
+      "path": "tests/SyncCollectionGuardTest.java",
+      "bytes": 1113,
+      "sha256": "35c5b333ccf83063a1b8eca339d4019ceff92274432d0822781b3a40bc8a21d4"
+    },
+    {
       "path": "tests/SyncEngineTest.java",
-      "bytes": 18641,
-      "sha256": "a30858608df4b0a66c54dbb51d75ac5bf44ec627b9b451950f5cde0f69572150"
+      "bytes": 20996,
+      "sha256": "3d54ac0561502030e680327d8c6215f9dd0a0f89e8760afc791e60e9181ffea3"
     },
     {
       "path": "tests/SyncWakeupTest.java",
@@ -576,9 +881,59 @@
       "sha256": "85c015e373532dcb4a16c9480d3be6c6ddaa35540196a3caa5194576182cc9a7"
     },
     {
+      "path": "tests/TrainingReviewsTest.java",
+      "bytes": 18314,
+      "sha256": "0c44d8c41916102c1719d12266f0852f786596f836e73858a488a5e99b6dc348"
+    },
+    {
+      "path": "tests/test_impact_evaluation.py",
+      "bytes": 20033,
+      "sha256": "86b9d47ec496b1c848da3a8b50f89977814d4b75874d718d5d96a4852e1c6374"
+    },
+    {
+      "path": "tests/test_impact_finetune.py",
+      "bytes": 2790,
+      "sha256": "b60c6dd7ed0751e209c39471118e2768a0342dd0162361147520c63dbd484b6d"
+    },
+    {
+      "path": "tests/test_impact_recovery.py",
+      "bytes": 33791,
+      "sha256": "79e558cd4f3b78517492ef4e4d6b89622a9efd881a54e644d6171f33f57cd4c3"
+    },
+    {
+      "path": "tests/test_impact_recovery_verification.py",
+      "bytes": 4423,
+      "sha256": "5fe2ab181a7d9dab0a09a485f2c4dead06063c236fe149da0f04972367c9ae5c"
+    },
+    {
+      "path": "tests/test_impact_release.py",
+      "bytes": 2726,
+      "sha256": "11c5dba337509d519be8c4b159f996a545d9c400fce539ea4b0e13ef22ab4d70"
+    },
+    {
+      "path": "tests/test_review_sync_guard.py",
+      "bytes": 2140,
+      "sha256": "1dddc37696f04c05571eedb0e4a3a9cd576e1c68c50a044692607589faf1e878"
+    },
+    {
       "path": "tests/test_sync_server.py",
-      "bytes": 14867,
-      "sha256": "871adc38980422843b8e91935242ca4e0a05bb778151ddf1283eec1e11929059"
+      "bytes": 18919,
+      "sha256": "28746d22c6aa6af6ea806916e3c43f3f2d9dfd1a89e23bf555f4d90e0c4883d5"
+    },
+    {
+      "path": "tests/test_training_reviews_export.py",
+      "bytes": 33815,
+      "sha256": "d53a6e2544eb06f25f0b69585034b90c064d56503a191c9cde51e288036d5346"
+    },
+    {
+      "path": "tools/IMPACT_RECOVERY.md",
+      "bytes": 7413,
+      "sha256": "416d1b712d7110438d4460f3d2a04548a74864a20aa5a7b19478743022961a17"
+    },
+    {
+      "path": "tools/assess_impact_release.py",
+      "bytes": 4554,
+      "sha256": "391205b1ab9c34c283c32ab7a35df875ef5687afbd25c6c10c1b83632753aded"
     },
     {
       "path": "tools/build_beta.sh",
@@ -586,9 +941,34 @@
       "sha256": "e252f1369766c1e1d016f80b5d361b135daf2b008fbaed68ac62f92ae2548667"
     },
     {
+      "path": "tools/build_review.ps1",
+      "bytes": 8273,
+      "sha256": "ec532f43ea01d67c1db46c1aabb67aecf8c7f5598c28a6b2053346669650f272"
+    },
+    {
       "path": "tools/check_apk_budget.py",
       "bytes": 1451,
       "sha256": "65b469727e84fecc176e22e496cd0ea981d71b546c80f5016fe14b8c17bffabd"
+    },
+    {
+      "path": "tools/compare_impact_finetune.py",
+      "bytes": 7690,
+      "sha256": "bf21e101ea05bd59c697ac4a55bba2985424929a0abef606c12fa8a617be3ec7"
+    },
+    {
+      "path": "tools/evaluate_impact.py",
+      "bytes": 44082,
+      "sha256": "4021b4a0e227a50429c0a6d1f83374691715dc6dc78e4ef502ba46c4676c42fc"
+    },
+    {
+      "path": "tools/export_training_reviews.py",
+      "bytes": 22891,
+      "sha256": "5cc6dc2a5109c23cb3214b895a26a9dc862e65b5b55df4ad357ac8291244e63e"
+    },
+    {
+      "path": "tools/fetch_review_icons.ps1",
+      "bytes": 3093,
+      "sha256": "c3c04e3e7da9d62f45bdf3859d98277d34059f151a538cb3418265350b07a631"
     },
     {
       "path": "tools/fetch_runtime.py",
@@ -596,9 +976,49 @@
       "sha256": "ec2a98dcb8b17cf75c5551d730355ee6ff1b3cc9b887347ed9c66b598bf89889"
     },
     {
+      "path": "tools/finetune_impact.py",
+      "bytes": 10160,
+      "sha256": "97083d3612311f6a88c659b3f54b7a84366bcfff2a703c26f434dbe12216ebcd"
+    },
+    {
+      "path": "tools/impact_recovery_requirements.txt",
+      "bytes": 305,
+      "sha256": "886bdf57709b4eddf1e8017e0cf654dd2650f13c25d445e79b4bc8f74b553554"
+    },
+    {
+      "path": "tools/impact_requirements.txt",
+      "bytes": 62,
+      "sha256": "9db737f214b9a01e80af8712f60e705ce61942963acabd338dd8136b8b79d4c7"
+    },
+    {
+      "path": "tools/recover_impact.py",
+      "bytes": 10745,
+      "sha256": "579d7899b42b611acaa1e5a50b2c7c950344cddce3188870c58add9a6ee66e4c"
+    },
+    {
+      "path": "tools/source_manifest.py",
+      "bytes": 1610,
+      "sha256": "4aa3271b7d0a7bfdabe18792ad5be3ad0bcc77c06565182a2020ccd8b7a6d9e3"
+    },
+    {
       "path": "tools/test_sync.sh",
-      "bytes": 2543,
-      "sha256": "7bf8f24ebd0ba7c997dbf99927e34f4d3ade2b10223492276905df7288a285cc"
+      "bytes": 3506,
+      "sha256": "0436f83ba85351f220a30b10645feebdd28a567ec50b64523b1680362cb1c825"
+    },
+    {
+      "path": "tools/test_sync_windows.ps1",
+      "bytes": 650,
+      "sha256": "e16e17001afb21fda47277f6906c3a0de580957453b832db3c816ffac6196087"
+    },
+    {
+      "path": "tools/validate_review.sh",
+      "bytes": 1181,
+      "sha256": "518968335f8091ebfc90a93629542f406c00de3fa693fb24f6dec4cec6bed714"
+    },
+    {
+      "path": "tools/verify_impact_recovery.py",
+      "bytes": 13349,
+      "sha256": "259483bc0e36c2daf50e7da10829a88b341aedb4256d1f3bea3031b866ba4e09"
     }
   ],
   "personal_photos": 0,
